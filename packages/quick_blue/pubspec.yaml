@@ -38,6 +38,8 @@ flutter:
         pluginClass: QuickBluePlugin
       ios:
         pluginClass: QuickBluePlugin
+      windows:
+        pluginClass: QuickBluePlugin
       macos:
         pluginClass: QuickBluePlugin
       linux:
