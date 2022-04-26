@@ -3,6 +3,7 @@ import 'dart:async';
 import 'src/quick_blue_platform_interface.dart';
 
 export 'src/models.dart';
+export 'src/quick_blue_linux.dart';
 
 QuickBluePlatform get _platform => QuickBluePlatform.instance;
 
