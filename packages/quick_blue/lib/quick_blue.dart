@@ -1,17 +1,25 @@
-// You have generated a new plugin project without
-// specifying the `--platforms` flag. A plugin project supports no platforms is generated.
-// To add platforms, run `flutter create -t plugin --platforms <platforms> .` under the same
-// directory. You can also find a detailed instruction on how to add platforms in the `pubspec.yaml` at https://flutter.dev/docs/development/packages-and-plugins/developing-packages#plugin-platforms.
-
 import 'dart:async';
 
-import 'package:flutter/services.dart';
+import 'src/quick_blue_platform_interface.dart';
+
+export 'src/models.dart';
+export 'src/quick_blue_linux.dart';
+
+QuickBluePlatform get _platform => QuickBluePlatform.instance;
 
 class QuickBlue {
-  static const MethodChannel _channel = MethodChannel('quick_blue');
+  static void setLogger(QuickLogger logger) =>
+      _platform.setLogger(logger);
 
-  static Future<String?> get platformVersion async {
-    final String? version = await _channel.invokeMethod('getPlatformVersion');
-    return version;
+  static Future<bool> isBluetoothAvailable() =>
+      _platform.isBluetoothAvailable();
+
+  static void startScan() => _platform.startScan();
+
+  static void stopScan() => _platform.stopScan();
+
+  static Stream<BlueScanResult> get scanResultStream {
+    return _platform.scanResultStream
+      .map((item) => BlueScanResult.fromMap(item));
   }
 }
