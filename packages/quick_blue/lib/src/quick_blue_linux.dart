@@ -81,6 +81,48 @@ class QuickBlueLinux extends QuickBluePlatform {
       'rssi': device.rssi,
     });
   }
+
+  @override
+  void connect(String deviceId) {
+    // TODO: implement connect
+    throw UnimplementedError();
+  }
+
+  @override
+  void disconnect(String deviceId) {
+    // TODO: implement disconnect
+    throw UnimplementedError();
+  }
+
+  @override
+  void discoverServices(String deviceId) {
+    // TODO: implement discoverServices
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> setNotifiable(String deviceId, String service, String characteristic, BleInputProperty bleInputProperty) {
+    // TODO: implement setNotifiable
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> readValue(String deviceId, String service, String characteristic) {
+    // TODO: implement readValue
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> writeValue(String deviceId, String service, String characteristic, Uint8List value, BleOutputProperty bleOutputProperty) {
+    // TODO: implement writeValue
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<int> requestMtu(String deviceId, int expectedMtu) {
+    // TODO: implement requestMtu
+    throw UnimplementedError();
+  }
 }
 
 extension BlueZDeviceExtension on BlueZDevice {
