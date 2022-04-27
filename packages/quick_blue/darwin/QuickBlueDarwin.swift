@@ -8,6 +8,10 @@ import Cocoa
 import FlutterMacOS
 #endif
 
+let GATT_HEADER_LENGTH = 3
+
+let GSS_SUFFIX = "0000-1000-8000-00805f9b34fb"
+
 extension CBUUID {
   public var uuidStr: String {
     get {
@@ -22,6 +26,20 @@ extension CBPeripheral {
     get {
       value(forKey: "identifier") as! NSUUID as UUID
     }
+  }
+
+  public func getCharacteristic(_ characteristic: String, of service: String) -> CBCharacteristic {
+    let s = self.services?.first {
+      $0.uuid.uuidStr == service || "0000\($0.uuid.uuidStr)-\(GSS_SUFFIX)" == service
+    }
+    let c = s?.characteristics?.first {
+      $0.uuid.uuidStr == characteristic || "0000\($0.uuid.uuidStr)-\(GSS_SUFFIX)" == characteristic
+    }
+    return c!
+  }
+
+  public func setNotifiable(_ bleInputProperty: String, for characteristic: String, of service: String) {
+    setNotifyValue(bleInputProperty != "disabled", for: getCharacteristic(characteristic, of: service))
   }
 }
 
@@ -64,6 +82,84 @@ public class QuickBlueDarwin: NSObject, FlutterPlugin {
     case "stopScan":
       manager.stopScan()
       result(nil)
+        case "connect":
+      let arguments = call.arguments as! Dictionary<String, Any>
+      let deviceId = arguments["deviceId"] as! String
+      guard let peripheral = discoveredPeripherals[deviceId] else {
+        result(FlutterError(code: "IllegalArgument", message: "Unknown deviceId:\(deviceId)", details: nil))
+        return
+      }
+      peripheral.delegate = self
+      manager.connect(peripheral)
+      result(nil)
+    case "disconnect":
+      let arguments = call.arguments as! Dictionary<String, Any>
+      let deviceId = arguments["deviceId"] as! String
+      guard let peripheral = discoveredPeripherals[deviceId] else {
+        result(FlutterError(code: "IllegalArgument", message: "Unknown deviceId:\(deviceId)", details: nil))
+        return
+      }
+      if (peripheral.state != .disconnected) {
+        manager.cancelPeripheralConnection(peripheral)
+      }
+      result(nil)
+    case "discoverServices":
+      let arguments = call.arguments as! Dictionary<String, Any>
+      let deviceId = arguments["deviceId"] as! String
+      guard let peripheral = discoveredPeripherals[deviceId] else {
+        result(FlutterError(code: "IllegalArgument", message: "Unknown deviceId:\(deviceId)", details: nil))
+        return
+      }
+      peripheral.discoverServices(nil)
+      result(nil)
+    case "setNotifiable":
+      let arguments = call.arguments as! Dictionary<String, Any>
+      let deviceId = arguments["deviceId"] as! String
+      let service = arguments["service"] as! String
+      let characteristic = arguments["characteristic"] as! String
+      let bleInputProperty = arguments["bleInputProperty"] as! String
+      guard let peripheral = discoveredPeripherals[deviceId] else {
+        result(FlutterError(code: "IllegalArgument", message: "Unknown deviceId:\(deviceId)", details: nil))
+        return
+      }
+      peripheral.setNotifiable(bleInputProperty, for: characteristic, of: service)
+      result(nil)
+    case "readValue":
+      let arguments = call.arguments as! Dictionary<String, Any>
+      let deviceId = arguments["deviceId"] as! String
+      let service = arguments["service"] as! String
+      let characteristic = arguments["characteristic"] as! String
+      guard let peripheral = discoveredPeripherals[deviceId] else {
+        result(FlutterError(code: "IllegalArgument", message: "Unknown deviceId:\(deviceId)", details: nil))
+        return
+      }
+      peripheral.readValue(for: peripheral.getCharacteristic(characteristic, of: service))
+      result(nil)
+    case "writeValue":
+      let arguments = call.arguments as! Dictionary<String, Any>
+      let deviceId = arguments["deviceId"] as! String
+      let service = arguments["service"] as! String
+      let characteristic = arguments["characteristic"] as! String
+      let value = arguments["value"] as! FlutterStandardTypedData
+      let bleOutputProperty = arguments["bleOutputProperty"] as! String
+      guard let peripheral = discoveredPeripherals[deviceId] else {
+        result(FlutterError(code: "IllegalArgument", message: "Unknown deviceId:\(deviceId)", details: nil))
+        return
+      }
+      let type = bleOutputProperty == "withoutResponse" ? CBCharacteristicWriteType.withoutResponse : CBCharacteristicWriteType.withResponse
+      peripheral.writeValue(value.data, for: peripheral.getCharacteristic(characteristic, of: service), type: type)
+      result(nil)
+    case "requestMtu":
+      let arguments = call.arguments as! Dictionary<String, Any>
+      let deviceId = arguments["deviceId"] as! String
+      guard let peripheral = discoveredPeripherals[deviceId] else {
+        result(FlutterError(code: "IllegalArgument", message: "Unknown deviceId:\(deviceId)", details: nil))
+        return
+      }
+      result(nil)
+      let mtu = peripheral.maximumWriteValueLength(for: .withoutResponse)
+      print("peripheral.maximumWriteValueLengthForType:CBCharacteristicWriteWithoutResponse \(mtu)")
+      messageConnector.sendMessage(["mtuConfig": mtu + GATT_HEADER_LENGTH])
     default:
       result(FlutterMethodNotImplemented)
     }
@@ -76,7 +172,7 @@ extension QuickBlueDarwin: CBCentralManagerDelegate {
   }
 
   public func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String: Any], rssi RSSI: NSNumber) {
-    print("centralManager:didDiscoverPeripheral \(peripheral.name) \(peripheral.uuid.uuidString)")
+    print("centralManager:didDiscoverPeripheral \(peripheral.name ?? "nil") \(peripheral.uuid.uuidString)")
     discoveredPeripherals[peripheral.uuid.uuidString] = peripheral
 
     let manufacturerData = advertisementData[CBAdvertisementDataManufacturerDataKey] as? Data
@@ -85,6 +181,22 @@ extension QuickBlueDarwin: CBCentralManagerDelegate {
       "deviceId": peripheral.uuid.uuidString,
       "manufacturerData": FlutterStandardTypedData(bytes: manufacturerData ?? Data()),
       "rssi": RSSI,
+    ])
+  }
+
+  public func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
+    print("centralManager:didConnect \(peripheral.uuid.uuidString)")
+    messageConnector.sendMessage([
+      "deviceId": peripheral.uuid.uuidString,
+      "ConnectionState": "connected",
+    ])
+  }
+    
+  public func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
+    print("centralManager:didDisconnectPeripheral: \(peripheral.uuid.uuidString) error: \(String(describing: error))")
+    messageConnector.sendMessage([
+      "deviceId": peripheral.uuid.uuidString,
+      "ConnectionState": "disconnected",
     ])
   }
 }
@@ -110,5 +222,43 @@ extension QuickBlueDarwin: FlutterStreamHandler {
       scanResultSink = nil
     }
     return nil
+  }
+}
+
+extension QuickBlueDarwin: CBPeripheralDelegate {
+  public func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
+    print("peripheral: \(peripheral.uuid.uuidString) didDiscoverServices error: \(String(describing: error))")
+    for service in peripheral.services! {
+      peripheral.discoverCharacteristics(nil, for: service)
+    }
+  }
+    
+  public func peripheral(_ peripheral: CBPeripheral, didDiscoverCharacteristicsFor service: CBService, error: Error?) {
+    for characteristic in service.characteristics! {
+      print("peripheral:didDiscoverCharacteristicsForService (\(service.uuid.uuidStr), \(characteristic.uuid.uuidStr)")
+    }
+    self.messageConnector.sendMessage([
+      "deviceId": peripheral.uuid.uuidString,
+      "ServiceState": "discovered",
+      "service": service.uuid.uuidStr,
+      "characteristics": service.characteristics!.map { $0.uuid.uuidStr }
+    ])
+  }
+
+  public func peripheral(_ peripheral: CBPeripheral, didWriteValueFor characteristic: CBCharacteristic, error: Error?) {
+    let data = characteristic.value as NSData?
+    print("peripheral:didWriteValueForCharacteristic \(characteristic.uuid.uuidStr) \(String(describing: data)) error: \(String(describing: error))")
+  }
+
+  public func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
+    let data = characteristic.value as NSData?
+    print("peripheral:didUpdateValueForCharacteristic \(characteristic.uuid) \(String(describing: data)) error: \(String(describing: error))")
+    self.messageConnector.sendMessage([
+      "deviceId": peripheral.uuid.uuidString,
+      "characteristicValue": [
+        "characteristic": characteristic.uuid.uuidStr,
+        "value": FlutterStandardTypedData(bytes: characteristic.value!)
+      ]
+    ])
   }
 }
