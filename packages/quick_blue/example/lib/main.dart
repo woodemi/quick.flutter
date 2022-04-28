@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:logging/logging.dart';
 import 'package:quick_blue/quick_blue.dart';
 
-import 'PeripheralDetailPage.dart';
+import 'peripheral_detail_page.dart';
 
 void main() {
   runApp(const MyApp());
