@@ -1,17 +1,60 @@
-// You have generated a new plugin project without
-// specifying the `--platforms` flag. A plugin project supports no platforms is generated.
-// To add platforms, run `flutter create -t plugin --platforms <platforms> .` under the same
-// directory. You can also find a detailed instruction on how to add platforms in the `pubspec.yaml` at https://flutter.dev/docs/development/packages-and-plugins/developing-packages#plugin-platforms.
+import 'dart:typed_data';
 
-import 'dart:async';
+import 'src/common.dart';
+import 'src/quick_usb_platform_interface.dart';
 
-import 'package:flutter/services.dart';
+export 'src/common.dart';
+
+QuickUsbPlatform get _platform => QuickUsbPlatform.instance;
 
 class QuickUsb {
-  static const MethodChannel _channel = MethodChannel('quick_usb');
+  static Future<bool> init() => _platform.init();
 
-  static Future<String?> get platformVersion async {
-    final String? version = await _channel.invokeMethod('getPlatformVersion');
-    return version;
-  }
+  static Future<void> exit() => _platform.exit();
+
+  static Future<List<UsbDevice>> getDeviceList() => _platform.getDeviceList();
+
+  static Future<bool> hasPermission(UsbDevice usbDevice) =>
+      _platform.hasPermission(usbDevice);
+
+  static Future<void> requestPermission(UsbDevice usbDevice) =>
+      _platform.requestPermission(usbDevice);
+
+  static Future<bool> openDevice(UsbDevice usbDevice) =>
+      _platform.openDevice(usbDevice);
+
+  static Future<void> closeDevice() => _platform.closeDevice();
+
+  static Future<UsbConfiguration> getConfiguration(int index) =>
+      _platform.getConfiguration(index);
+
+  static Future<bool> setConfiguration(UsbConfiguration config) =>
+      _platform.setConfiguration(config);
+
+  static Future<bool> detachKernelDriver(UsbInterface intf) =>
+      _platform.detachKernelDriver(intf);
+
+  static Future<bool> claimInterface(UsbInterface intf) =>
+      _platform.claimInterface(intf);
+
+  static Future<bool> releaseInterface(UsbInterface intf) =>
+      _platform.releaseInterface(intf);
+
+  static Future<Uint8List> bulkTransferIn(UsbEndpoint endpoint, int maxLength,
+          {int timeout = 1000}) =>
+      _platform.bulkTransferIn(endpoint, maxLength, timeout);
+
+  static Future<int> bulkTransferOut(UsbEndpoint endpoint, Uint8List data,
+          {int timeout = 1000}) =>
+      _platform.bulkTransferOut(endpoint, data, timeout);
+
+  static Future<UsbDeviceDescription> getDeviceDescription(
+          UsbDevice usbDevice) =>
+      _platform.getDeviceDescription(usbDevice);
+
+  static Future<List<UsbDeviceDescription>> getDevicesWithDescription() =>
+      _platform.getDevicesWithDescription();
+
+  static Future<void> setAutoDetachKernelDriver(bool enable) =>
+      _platform.setAutoDetachKernelDriver(enable);
 }
