@@ -35,6 +35,8 @@ flutter:
       android:
         package: com.example.quick_usb
         pluginClass: QuickUsbPlugin
+      windows:
+        pluginClass: QuickUsbPlugin
       macos:
         pluginClass: QuickUsbPlugin
       linux:
