@@ -5,6 +5,7 @@ import 'src/quick_usb_platform_interface.dart';
 
 export 'src/common.dart';
 export 'src/quick_usb_android.dart';
+export 'src/quick_usb_desktop.dart';
 
 QuickUsbPlatform get _platform => QuickUsbPlatform.instance;
 
