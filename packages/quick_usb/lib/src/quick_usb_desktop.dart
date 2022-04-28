@@ -12,6 +12,14 @@ import 'utils.dart';
 
 late Libusb _libusb;
 
+class QuickUsbWindows extends _QuickUsbDesktop {
+  // For example/.dart_tool/flutter_build/generated_main.dart
+  static registerWith() {
+    QuickUsbPlatform.instance = QuickUsbMacos();
+    _libusb = Libusb(DynamicLibrary.open('libusb-1.0.23.dll'));
+  }
+}
+
 class QuickUsbMacos extends _QuickUsbDesktop {
   // For example/.dart_tool/flutter_build/generated_main.dart
   static registerWith() {
