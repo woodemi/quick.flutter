@@ -24,5 +24,25 @@
             "type": "dart",
             "flutterMode": "release"
         },
+        {
+            "name": "quick_usb/debug",
+            "cwd": "packages/quick_usb/example",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "quick_usb/profile",
+            "cwd": "packages/quick_usb/example",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "quick_usb/release",
+            "cwd": "packages/quick_usb/example",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
     ]
 }
