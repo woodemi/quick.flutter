@@ -32,8 +32,9 @@ flutter:
     # then add platforms following the instruction here:
     # https://flutter.dev/docs/development/packages-and-plugins/developing-packages#plugin-platforms
     # -------------------
-      some_platform:
-        pluginClass: somePluginClass
+      android:
+        package: com.example.quick_usb
+        pluginClass: QuickUsbPlugin
     # -------------------
 
   # To add assets to your plugin package, add an assets section, like this:
