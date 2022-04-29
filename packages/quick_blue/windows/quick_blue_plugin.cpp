@@ -222,10 +222,15 @@ void QuickBluePlugin::HandleMethodCall(
   if (method_name.compare("isBluetoothAvailable") == 0) {
     result->Success(EncodableValue(bluetoothRadio && bluetoothRadio.State() == RadioState::On));
   } else if (method_name.compare("startScan") == 0) {
-
-      if (bluetoothRadio.State() != RadioState::On)
+    // Are there any Bluetooth adapters on the computer that could service this request?
+		if (bluetoothRadio == nullptr)
+		{
+            result->Error("No available adapters to be used for BLE.");
+		}
+    // Is the Bluetooth switch enabled on the host OS?
+      else if (bluetoothRadio.State() != RadioState::On)
       {
-          result->Error("Bluetooth isn't currently turned on");
+          result->Error("Bluetooth isn't currently turned on.");
       }
       else
       {
