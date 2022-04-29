@@ -33,7 +33,7 @@ class MethodChannelQuickBlue extends QuickBluePlatform {
   }
 
   @override
-  void startScan() {
+  Future<void> startScan() async {
     _method.invokeMethod('startScan')
         .then((_) => _log('startScan invokeMethod success'));
   }

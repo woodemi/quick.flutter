@@ -222,12 +222,20 @@ void QuickBluePlugin::HandleMethodCall(
   if (method_name.compare("isBluetoothAvailable") == 0) {
     result->Success(EncodableValue(bluetoothRadio && bluetoothRadio.State() == RadioState::On));
   } else if (method_name.compare("startScan") == 0) {
-    if (!bluetoothLEWatcher) {
-      bluetoothLEWatcher = BluetoothLEAdvertisementWatcher();
-      bluetoothLEWatcherReceivedToken = bluetoothLEWatcher.Received({ this, &QuickBluePlugin::BluetoothLEWatcher_Received });
-    }
-    bluetoothLEWatcher.Start();
-    result->Success(nullptr);
+
+      if (bluetoothRadio.State() != RadioState::On)
+      {
+          result->Error("Bluetooth isn't currently turned on");
+      }
+      else
+      {
+          if (!bluetoothLEWatcher) {
+              bluetoothLEWatcher = BluetoothLEAdvertisementWatcher();
+              bluetoothLEWatcherReceivedToken = bluetoothLEWatcher.Received({ this, &QuickBluePlugin::BluetoothLEWatcher_Received });
+          }
+          bluetoothLEWatcher.Start();
+          result->Success(nullptr);
+      }
   } else if (method_name.compare("stopScan") == 0) {
     if (bluetoothLEWatcher) {
       bluetoothLEWatcher.Stop();

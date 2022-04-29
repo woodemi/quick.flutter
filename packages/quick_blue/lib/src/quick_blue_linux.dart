@@ -51,7 +51,7 @@ class QuickBlueLinux extends QuickBluePlatform {
   }
 
   @override
-  void startScan() async {
+  Future<void> startScan() async {
     await _ensureInitialized();
     _log('startScan invoke success');
 
