@@ -11,13 +11,6 @@ G_BEGIN_DECLS
 #define FLUTTER_PLUGIN_EXPORT
 #endif
 
-typedef struct _QuickUsbPlugin QuickUsbPlugin;
-typedef struct {
-  GObjectClass parent_class;
-} QuickUsbPluginClass;
-
-FLUTTER_PLUGIN_EXPORT GType quick_usb_plugin_get_type();
-
 FLUTTER_PLUGIN_EXPORT void quick_usb_plugin_register_with_registrar(
     FlPluginRegistrar* registrar);
 

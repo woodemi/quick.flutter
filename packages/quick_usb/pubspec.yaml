@@ -43,7 +43,6 @@ flutter:
         pluginClass: QuickUsbPlugin
         dartPluginClass: QuickUsbWindows
       macos:
-        pluginClass: QuickUsbPlugin
         dartPluginClass: QuickUsbMacos
       linux:
         pluginClass: QuickUsbPlugin
