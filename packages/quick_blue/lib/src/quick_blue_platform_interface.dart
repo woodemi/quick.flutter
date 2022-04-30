@@ -37,7 +37,7 @@ abstract class QuickBluePlatform extends PlatformInterface {
 
   Future<void> startScan();
 
-  void stopScan();
+  Future<void> stopScan();
 
   Stream<dynamic> get scanResultStream;
 

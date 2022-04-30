@@ -60,7 +60,7 @@ class QuickBlueLinux extends QuickBluePlatform {
   }
 
   @override
-  void stopScan() async {
+  Future<void> stopScan() async {
     await _ensureInitialized();
     _log('stopScan invoke success');
 

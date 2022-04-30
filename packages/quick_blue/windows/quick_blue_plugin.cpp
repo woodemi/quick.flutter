@@ -222,32 +222,27 @@ void QuickBluePlugin::HandleMethodCall(
   if (method_name.compare("isBluetoothAvailable") == 0) {
     result->Success(EncodableValue(bluetoothRadio && bluetoothRadio.State() == RadioState::On));
   } else if (method_name.compare("startScan") == 0) {
-    // Are there any Bluetooth adapters on the computer that could service this request?
-		if (bluetoothRadio == nullptr)
-		{
-            result->Error("No available adapters to be used for BLE.");
-		}
-    // Is the Bluetooth switch enabled on the host OS?
-      else if (bluetoothRadio.State() != RadioState::On)
-      {
-          result->Error("Bluetooth isn't currently turned on.");
+    if (bluetoothRadio && bluetoothRadio.State() == RadioState::On) {
+      if (!bluetoothLEWatcher) {
+        bluetoothLEWatcher = BluetoothLEAdvertisementWatcher();
+        bluetoothLEWatcherReceivedToken = bluetoothLEWatcher.Received({ this, &QuickBluePlugin::BluetoothLEWatcher_Received });
       }
-      else
-      {
-          if (!bluetoothLEWatcher) {
-              bluetoothLEWatcher = BluetoothLEAdvertisementWatcher();
-              bluetoothLEWatcherReceivedToken = bluetoothLEWatcher.Received({ this, &QuickBluePlugin::BluetoothLEWatcher_Received });
-          }
-          bluetoothLEWatcher.Start();
-          result->Success(nullptr);
-      }
-  } else if (method_name.compare("stopScan") == 0) {
-    if (bluetoothLEWatcher) {
-      bluetoothLEWatcher.Stop();
-      bluetoothLEWatcher.Received(bluetoothLEWatcherReceivedToken);
+      bluetoothLEWatcher.Start();
+      result->Success(nullptr);
+    } else {
+      result->Error("IllegalState", "Bluetooth unavailable");
     }
-    bluetoothLEWatcher = nullptr;
-    result->Success(nullptr);
+  } else if (method_name.compare("stopScan") == 0) {
+    if (bluetoothRadio && bluetoothRadio.State() == RadioState::On) {
+      if (bluetoothLEWatcher) {
+        bluetoothLEWatcher.Stop();
+        bluetoothLEWatcher.Received(bluetoothLEWatcherReceivedToken);
+      }
+      bluetoothLEWatcher = nullptr;
+      result->Success(nullptr);
+    } else {
+      result->Error("IllegalState", "Bluetooth unavailable");
+    }
   } else if (method_name.compare("connect") == 0) {
     auto args = std::get<EncodableMap>(*method_call.arguments());
     auto deviceId = std::get<std::string>(args[EncodableValue("deviceId")]);
