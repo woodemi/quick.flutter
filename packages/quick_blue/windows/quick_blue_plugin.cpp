@@ -449,7 +449,7 @@ winrt::fire_and_forget QuickBluePlugin::DiscoverServicesAsync(BluetoothDeviceAge
       for (auto c : characteristicResult.Characteristics()) {
         characteristics.push_back(to_uuidstr(c.Uuid()));
       }
-      msg["characteristics"] = characteristics;
+      msg.insert({"characteristics", characteristics});
     }
     message_connector_->Send(msg);
   }
