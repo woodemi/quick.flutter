@@ -36,8 +36,8 @@ class QuickScanPlugin : FlutterPlugin {
 }
 
 class ScanViewFactory(private val messenger: BinaryMessenger) : PlatformViewFactory(StandardMessageCodec.INSTANCE) {
-    override fun create(context: Context, viewId: Int, args: Any?): PlatformView {
-        val scanView = ScanView(context)
+    override fun create(context: Context?, viewId: Int, args: Any?): PlatformView {
+        val scanView = ScanView(context!!)
         EventChannel(messenger, "quick_scan/scanview_$viewId/event").setStreamHandler(scanView)
         return scanView
     }
