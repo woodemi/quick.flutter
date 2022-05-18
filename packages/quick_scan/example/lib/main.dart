@@ -1,50 +1,18 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
-
-import 'package:flutter/services.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:quick_scan/quick_scan.dart';
 
-void main() {
-  runApp(const MyApp());
-}
+void main() => runApp(const MyApp());
 
 class MyApp extends StatefulWidget {
   const MyApp({Key? key}) : super(key: key);
 
   @override
-  State<MyApp> createState() => _MyAppState();
+  _MyAppState createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
-  String _platformVersion = 'Unknown';
-
-  @override
-  void initState() {
-    super.initState();
-    initPlatformState();
-  }
-
-  // Platform messages are asynchronous, so we initialize in an async method.
-  Future<void> initPlatformState() async {
-    String platformVersion;
-    // Platform messages may fail, so we use a try/catch PlatformException.
-    // We also handle the message potentially returning null.
-    try {
-      platformVersion =
-          await QuickScan.platformVersion ?? 'Unknown platform version';
-    } on PlatformException {
-      platformVersion = 'Failed to get platform version.';
-    }
-
-    // If the widget was removed from the tree while the asynchronous platform
-    // message was in flight, we want to discard the reply rather than calling
-    // setState to update our non-existent appearance.
-    if (!mounted) return;
-
-    setState(() {
-      _platformVersion = platformVersion;
-    });
-  }
+  bool permitted = false;
 
   @override
   Widget build(BuildContext context) {
@@ -52,11 +20,52 @@ class _MyAppState extends State<MyApp> {
       home: Scaffold(
         appBar: AppBar(
           title: const Text('Plugin example app'),
+          actions: <Widget>[
+            _buildTextButton(),
+          ],
         ),
-        body: Center(
-          child: Text('Running on: $_platformVersion\n'),
-        ),
+        body: buildBody(),
       ),
     );
+  }
+
+  Widget _buildTextButton() {
+    return Builder(
+      builder: (context) {
+        return TextButton(
+          child: const Text('Scan', style: TextStyle(color: Colors.white)),
+          onPressed: () async {
+            try {
+              await checkAndRequestPermission();
+              setState(() => permitted = true);
+            } catch (e) {
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+            }
+          },
+        );
+      },
+    );
+  }
+
+  Widget buildBody() {
+    if (!permitted) return Container();
+
+    return Center(
+      child: ScanView(
+        callback: (String result) {
+          debugPrint('scanResult $result');
+        },
+      ),
+    );
+  }
+}
+
+Future<void> checkAndRequestPermission() async {
+  var permissionStatus = await Permission.camera.status;
+  if (!permissionStatus.isGranted) {
+    permissionStatus = await Permission.camera.request();
+    if (!permissionStatus.isGranted) {
+      throw Exception('Permission Denied');
+    }
   }
 }
