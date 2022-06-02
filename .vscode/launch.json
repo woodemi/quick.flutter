@@ -64,5 +64,25 @@
             "type": "dart",
             "flutterMode": "release"
         },
+        {
+            "name": "quick_notify/debug",
+            "cwd": "packages/quick_notify/example",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "quick_notify/profile",
+            "cwd": "packages/quick_notify/example",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "quick_notify/release",
+            "cwd": "packages/quick_notify/example",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
     ]
 }
