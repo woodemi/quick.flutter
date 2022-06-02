@@ -43,6 +43,8 @@ flutter:
         pluginClass: QuickNotifyPlugin
       windows:
         pluginClass: QuickNotifyPlugin
+      linux:
+        pluginClass: QuickNotifyPlugin
       web:
         pluginClass: QuickNotifyWeb
         fileName: quick_notify_web.dart
