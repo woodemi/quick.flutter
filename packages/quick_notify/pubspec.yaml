@@ -35,6 +35,8 @@ flutter:
       android:
         package: com.example.quick_notify
         pluginClass: QuickNotifyPlugin
+      ios:
+        pluginClass: QuickNotifyPlugin
     # -------------------
 
   # To add assets to your plugin package, add an assets section, like this:
