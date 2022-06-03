@@ -1,17 +1,17 @@
-// You have generated a new plugin project without
-// specifying the `--platforms` flag. A plugin project supports no platforms is generated.
-// To add platforms, run `flutter create -t plugin --platforms <platforms> .` under the same
-// directory. You can also find a detailed instruction on how to add platforms in the `pubspec.yaml` at https://flutter.dev/docs/development/packages-and-plugins/developing-packages#plugin-platforms.
+import 'src/quick_notify_platform_interface.dart';
 
-import 'dart:async';
-
-import 'package:flutter/services.dart';
+QuickNotifyPlatform get _platform => QuickNotifyPlatform.instance;
 
 class QuickNotify {
-  static const MethodChannel _channel = MethodChannel('quick_notify');
+  static Future<bool> hasPermission() => _platform.hasPermission();
 
-  static Future<String?> get platformVersion async {
-    final String? version = await _channel.invokeMethod('getPlatformVersion');
-    return version;
-  }
+  static Future<bool> requestPermission() => _platform.requestPermission();
+
+  static void notify({
+    String title = 'quick_notify',
+    String? content,
+  }) => _platform.notify(
+    title: title,
+    content: content,
+  );
 }
