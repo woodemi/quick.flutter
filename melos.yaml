@@ -3,14 +3,23 @@ name: QuickFlutter
 packages:
   - packages/**
 
+command:
+  bootstrap:
+    runPubGetInParallel: false
+
 scripts:
   build:android:
+    run: melos bootstrap
     run: melos exec --dir-exists="android" --scope="*example*" -- flutter build apk
   build:ios:
+    run: melos bootstrap
     run: melos exec --dir-exists="ios" --scope="*example*" -- flutter build ios --no-codesign
   build:windows:
+    run: melos bootstrap
     run: melos exec --dir-exists="windows" --scope="*example*" -- flutter build windows
   build:macos:
+    run: melos bootstrap
     run: melos exec --dir-exists="macos" --scope="*example*" -- flutter build macos
   build:linux:
+    run: melos bootstrap
     run: melos exec --dir-exists="linux" --scope="*example*" -- flutter build linux
