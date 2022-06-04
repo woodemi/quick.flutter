@@ -3,10 +3,6 @@ name: QuickFlutter
 packages:
   - packages/**
 
-command:
-  bootstrap:
-    runPubGetInParallel: false
-
 scripts:
   build:android:
     run: melos exec --dir-exists="android" --scope="*example*" -- flutter build apk
