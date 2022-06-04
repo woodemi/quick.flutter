@@ -3,7 +3,6 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-  quick_notify
 )
 
 set(PLUGIN_BUNDLED_LIBRARIES)
