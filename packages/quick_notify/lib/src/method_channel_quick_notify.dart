@@ -18,11 +18,11 @@ class MethodChannelQuickNotify extends QuickNotifyPlatform {
   }
 
   @override
-  void notify({
+  Future<void> notify({
     required String title,
     String? content,
-  }) {
-    _channel.invokeMethod('notify', {
+  }) async {
+    await _channel.invokeMethod('notify', {
       'title': title,
       'content': content,
     });

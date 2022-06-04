@@ -19,7 +19,7 @@ abstract class QuickNotifyPlatform extends PlatformInterface {
 
   Future<bool> requestPermission();
 
-  void notify({
+  Future<void> notify({
     required String title,
     String? content,
   });
