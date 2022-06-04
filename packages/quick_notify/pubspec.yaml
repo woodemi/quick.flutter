@@ -1,6 +1,6 @@
 name: quick_notify
-description: A new flutter plugin project.
-version: 0.0.1
+description: A cross-platform (Android/iOS/Web/Windows/macOS/Linux) notification plugin for Flutter.
+version: 0.3.0-dev.0
 homepage: https://github.com/woodemi/quick.flutter
 repository: https://github.com/woodemi/quick.flutter/tree/master/packages/quick_notify
 
