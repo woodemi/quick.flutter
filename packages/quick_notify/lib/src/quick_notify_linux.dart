@@ -19,14 +19,12 @@ class QuickNotifyLinux extends QuickNotifyPlatform {
   }
 
   @override
-  void notify({
+  Future<void> notify({
     required String title,
     String? content,
-  }) {
-    () async {
-      var client = NotificationsClient();
-      await client.notify(title, body: content ?? '');
-      await client.close();
-    }();
+  }) async {
+    var client = NotificationsClient();
+    await client.notify(title, body: content ?? '');
+    await client.close();
   }
 }

@@ -24,10 +24,10 @@ class QuickNotifyWeb extends QuickNotifyPlatform {
   }
 
   @override
-  void notify({
+  Future<void> notify({
     required String title,
     String? content,
-  }) {
+  }) async {
     Notification(title, body: content);
   }
 }

@@ -9,7 +9,7 @@ class QuickNotify {
 
   static Future<bool> requestPermission() => _platform.requestPermission();
 
-  static void notify({
+  static Future<void> notify({
     String title = 'quick_notify',
     String? content,
   }) => _platform.notify(
