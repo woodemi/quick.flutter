@@ -1,5 +1,7 @@
 import 'src/quick_notify_platform_interface.dart';
 
+export 'src/quick_notify_linux.dart';
+
 QuickNotifyPlatform get _platform => QuickNotifyPlatform.instance;
 
 class QuickNotify {
