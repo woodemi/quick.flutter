@@ -2,7 +2,7 @@
 
 #include <flutter_linux/flutter_linux.h>
 #include <gtk/gtk.h>
-#include <sys/utsname.h>
+#include <libnotify/notify.h>
 
 #include <cstring>
 
@@ -24,12 +24,21 @@ static void quick_notify_plugin_handle_method_call(
 
   const gchar* method = fl_method_call_get_name(method_call);
 
-  if (strcmp(method, "getPlatformVersion") == 0) {
-    struct utsname uname_data = {};
-    uname(&uname_data);
-    g_autofree gchar *version = g_strdup_printf("Linux %s", uname_data.version);
-    g_autoptr(FlValue) result = fl_value_new_string(version);
+  if (strcmp(method, "hasPermission") == 0) {
+    g_autoptr(FlValue) result = fl_value_new_bool(true);
     response = FL_METHOD_RESPONSE(fl_method_success_response_new(result));
+  } else if (strcmp(method, "requestPermission") == 0) {
+    g_autoptr(FlValue) result = fl_value_new_bool(true);
+    response = FL_METHOD_RESPONSE(fl_method_success_response_new(result));
+  } else if (strcmp(method, "notify") == 0) {
+    FlValue* args = fl_method_call_get_args(method_call);
+    const gchar* title = fl_value_get_string(fl_value_lookup_string(args, "title"));
+    const gchar* content = fl_value_get_string(fl_value_lookup_string(args, "content"));
+
+    notify_init("quick_notify");
+    NotifyNotification *n = notify_notification_new(title, content, 0);
+    notify_notification_show(n, 0);
+    response = FL_METHOD_RESPONSE(fl_method_success_response_new(nullptr));
   } else {
     response = FL_METHOD_RESPONSE(fl_method_not_implemented_response_new());
   }
