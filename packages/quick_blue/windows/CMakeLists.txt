@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.14)
 set(PROJECT_NAME "quick_blue")
 project(${PROJECT_NAME} LANGUAGES CXX)
 
-include(FetchContent)
 set(CPPWINRT_VERSION "2.0.220418.1")
 
 # This value is used when generating builds using this plugin, so it must
@@ -10,26 +9,14 @@ set(CPPWINRT_VERSION "2.0.220418.1")
 set(PLUGIN_NAME "quick_blue_plugin")
 
 ################ NuGet intall begin ################
-FetchContent_Declare(nuget
-  URL "https://dist.nuget.org/win-x86-commandline/v6.0.0/nuget.exe"
-  URL_HASH SHA256=04eb6c4fe4213907e2773e1be1bbbd730e9a655a3c9c58387ce8d4a714a5b9e1
-  DOWNLOAD_NO_EXTRACT true
-)
-
-find_program(NUGET nuget)
-if (NOT NUGET)
-    message("Nuget.exe not found, trying to download or use cached version.")
-    FetchContent_MakeAvailable(nuget)
-    set(NUGET ${nuget_SOURCE_DIR}/nuget.exe)
+find_program(NUGET_EXE NAMES nuget)
+if(NOT NUGET_EXE)
+	message("NUGET.EXE not found.")
+	message(FATAL_ERROR "Please install this executable, and run CMake again.")
 endif()
 
-execute_process(COMMAND
-    ${NUGET} install "Microsoft.Windows.CppWinRT" -Version ${CPPWINRT_VERSION} -OutputDirectory packages
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-    RESULT_VARIABLE ret)
-if (NOT ret EQUAL 0)
-    message(FATAL_ERROR "Failed to install nuget package Microsoft.Windows.CppWinRT.${CPPWINRT_VERSION}")
-endif()
+exec_program(${NUGET_EXE}
+    ARGS install "Microsoft.Windows.CppWinRT" -Version ${CPPWINRT_VERSION} -OutputDirectory ${CMAKE_BINARY_DIR}/packages)
 ################ NuGet install end ################
 
 add_library(${PLUGIN_NAME} SHARED
