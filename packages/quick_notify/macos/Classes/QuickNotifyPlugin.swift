@@ -14,7 +14,7 @@ public class QuickNotifyPlugin: NSObject, FlutterPlugin {
     case "hasPermission":
       if #available(macOS 10.14, *) {
         UNUserNotificationCenter.current().getNotificationSettings { settings in
-          result(settings.authorizationStatus != .denied)
+          result(settings.authorizationStatus != .notDetermined && settings.authorizationStatus != .denied)
         }
       } else {
         result(true)

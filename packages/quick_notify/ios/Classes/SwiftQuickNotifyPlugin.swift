@@ -12,7 +12,7 @@ public class SwiftQuickNotifyPlugin: NSObject, FlutterPlugin {
     switch call.method {
     case "hasPermission":
       UNUserNotificationCenter.current().getNotificationSettings { settings in
-        result(settings.authorizationStatus != .denied)
+        result(settings.authorizationStatus != .notDetermined && settings.authorizationStatus != .denied)
       }
     case "requestPermission":
       UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
