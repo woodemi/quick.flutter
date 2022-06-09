@@ -1,6 +1,6 @@
 name: quick_usb
-description: A new flutter plugin project.
-version: 0.0.1
+description: A cross-platform (Android/Windows/macOS/Linux) USB plugin for Flutter
+version: 0.4.0-dev.0
 homepage: https://github.com/woodemi/quick.flutter
 repository: https://github.com/woodemi/quick.flutter/tree/master/packages/quick_usb
 
@@ -13,6 +13,7 @@ dependencies:
     sdk: flutter
   plugin_platform_interface: ^2.1.2
   libusb: ^0.3.23+2
+  ffi: ^1.2.0
 
 dev_dependencies:
   flutter_test:
