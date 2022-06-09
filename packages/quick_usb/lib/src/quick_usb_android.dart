@@ -25,9 +25,40 @@ class QuickUsbAndroid extends QuickUsbPlatform {
 
   @override
   Future<List<UsbDevice>> getDeviceList() async {
-    List<Map<dynamic, dynamic>> list =
-        (await _channel.invokeListMethod('getDeviceList'))!;
-    return list.map((e) => UsbDevice.fromMap(e)).toList();
+    List<Map<dynamic, dynamic>> devices = (await _channel.invokeListMethod('getDeviceList'))!;
+    return devices.map((device) => UsbDevice.fromMap(device)).toList();
+  }
+
+  @override
+  Future<List<UsbDeviceDescription>> getDevicesWithDescription({
+    bool requestPermission = true,
+  }) async {
+    var devices = await getDeviceList();
+    var result = <UsbDeviceDescription>[];
+    for (var device in devices) {
+      result.add(await getDeviceDescription(
+        device,
+        requestPermission: requestPermission,
+      ));
+    }
+    return result;
+  }
+
+  @override
+  Future<UsbDeviceDescription> getDeviceDescription(
+    UsbDevice usbDevice, {
+    bool requestPermission = true,
+  }) async {
+    var result = await _channel.invokeMethod('getDeviceDescription', {
+      'device': usbDevice.toMap(),
+      'requestPermission': requestPermission,
+    });
+    return UsbDeviceDescription(
+      device: usbDevice,
+      manufacturer: result['manufacturer'],
+      product: result['product'],
+      serialNumber: result['serialNumber'],
+    );
   }
 
   @override
@@ -103,28 +134,6 @@ class QuickUsbAndroid extends QuickUsbPlatform {
       'data': data,
       'timeout': timeout,
     });
-  }
-
-  @override
-  Future<UsbDeviceDescription> getDeviceDescription(UsbDevice usbDevice) async {
-    var result =
-        await _channel.invokeMethod('getDeviceDescription', usbDevice.toMap());
-    return UsbDeviceDescription(
-      device: usbDevice,
-      manufacturer: result['manufacturer'],
-      product: result['product'],
-      serialNumber: result['serialNumber'],
-    );
-  }
-
-  @override
-  Future<List<UsbDeviceDescription>> getDevicesWithDescription() async {
-    var devices = await getDeviceList();
-    var result = <UsbDeviceDescription>[];
-    for (var device in devices) {
-      result.add(await getDeviceDescription(device));
-    }
-    return result;
   }
 
   @override

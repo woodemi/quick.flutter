@@ -16,9 +16,9 @@ import io.flutter.plugin.common.MethodChannel.Result
 
 private const val ACTION_USB_PERMISSION = "com.example.quick_usb.USB_PERMISSION"
 
-private val pendingIntentFlag = 
+private val pendingIntentFlag =
   if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT 
+    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
   } else {
     PendingIntent.FLAG_UPDATE_CURRENT
   }
@@ -69,13 +69,43 @@ class QuickUsbPlugin : FlutterPlugin, MethodCallHandler {
         val manager = usbManager ?: return result.error("IllegalState", "usbManager null", null)
         val usbDeviceList = manager.deviceList.entries.map {
           mapOf(
-                  "identifier" to it.key,
-                  "vendorId" to it.value.vendorId,
-                  "productId" to it.value.productId,
-                  "configurationCount" to it.value.configurationCount
+            "identifier" to it.key,
+            "vendorId" to it.value.vendorId,
+            "productId" to it.value.productId,
+            "configurationCount" to it.value.configurationCount,
           )
         }
         result.success(usbDeviceList)
+      }
+      "getDeviceDescription" -> {
+        val context = applicationContext ?: return result.error("IllegalState", "applicationContext null", null)
+        val manager = usbManager ?: return result.error("IllegalState", "usbManager null", null)
+        val identifier = call.argument<Map<String, Any>>("device")!!["identifier"]!!;
+        val device = manager.deviceList[identifier] ?: return result.error("IllegalState", "usbDevice null", null)
+        val requestPermission = call.argument<Boolean>("requestPermission")!!;
+
+        val hasPermission = manager.hasPermission(device)
+        if (requestPermission && !hasPermission) {
+          val permissionReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+              context.unregisterReceiver(this)
+              val granted = intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false);
+              result.success(mapOf(
+                "manufacturer" to device.manufacturerName,
+                "product" to device.productName,
+                "serialNumber" to if (granted) device.serialNumber else null,
+              ))
+            }
+          }
+          context.registerReceiver(permissionReceiver, IntentFilter(ACTION_USB_PERMISSION))
+          manager.requestPermission(device, pendingPermissionIntent(context))
+        } else {
+          result.success(mapOf(
+            "manufacturer" to device.manufacturerName,
+            "product" to device.productName,
+            "serialNumber" to if (hasPermission) device.serialNumber else null,
+          ))
+        }
       }
       "hasPermission" -> {
         val manager = usbManager ?: return result.error("IllegalState", "usbManager null", null)
@@ -187,37 +217,6 @@ class QuickUsbPlugin : FlutterPlugin, MethodCallHandler {
           result.error("unknown", "bulkTransferOut error", null)
         } else {
           result.success(sum)
-        }
-      }
-      "getDeviceDescription" -> {
-        val context = applicationContext ?: return result.error("IllegalState", "applicationContext null", null)
-        val manager = usbManager ?: return result.error("IllegalState", "usbManager null", null)
-        val identifier = call.argument<String>("identifier")
-        val device = manager.deviceList[identifier] ?: return result.error("IllegalState", "usbDevice null", null)
-        if (!manager.hasPermission(device)) {
-          val permissionReceiver = object : BroadcastReceiver() {
-            override fun onReceive(context: Context, intent: Intent) {
-              context.unregisterReceiver(this)
-              val granted = intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)
-              if (!granted) {
-                result.success(mapOf<String, String?>())
-              } else {
-                result.success(mapOf(
-                  "manufacturer" to device.manufacturerName,
-                  "product" to device.productName,
-                  "serialNumber" to device.serialNumber
-                ))
-              }
-            }
-          }
-          context.registerReceiver(permissionReceiver, IntentFilter(ACTION_USB_PERMISSION))
-          manager.requestPermission(device, pendingPermissionIntent(context))
-        } else {
-          result.success(mapOf(
-            "manufacturer" to device.manufacturerName,
-            "product" to device.productName,
-            "serialNumber" to device.serialNumber
-          ))
         }
       }
       else -> result.notImplemented()

@@ -16,6 +16,24 @@ class QuickUsb {
 
   static Future<List<UsbDevice>> getDeviceList() => _platform.getDeviceList();
 
+  /// [requestPermission] If true, Android will ask permission for each USB
+  /// device if required. Only required to retrieve the serial number.
+  static Future<List<UsbDeviceDescription>> getDevicesWithDescription({
+    bool requestPermission = true,
+  }) =>
+      _platform.getDevicesWithDescription(requestPermission: requestPermission);
+
+  /// [requestPermission] If true, Android will ask permission for the USB device
+  /// if required. Only required to retrieve the serial number.
+  static Future<UsbDeviceDescription> getDeviceDescription(
+    UsbDevice usbDevice, {
+    bool requestPermission = true,
+  }) =>
+      _platform.getDeviceDescription(
+        usbDevice,
+        requestPermission: requestPermission,
+      );
+
   static Future<bool> hasPermission(UsbDevice usbDevice) =>
       _platform.hasPermission(usbDevice);
 
@@ -49,13 +67,6 @@ class QuickUsb {
   static Future<int> bulkTransferOut(UsbEndpoint endpoint, Uint8List data,
           {int timeout = 1000}) =>
       _platform.bulkTransferOut(endpoint, data, timeout);
-
-  static Future<UsbDeviceDescription> getDeviceDescription(
-          UsbDevice usbDevice) =>
-      _platform.getDeviceDescription(usbDevice);
-
-  static Future<List<UsbDeviceDescription>> getDevicesWithDescription() =>
-      _platform.getDevicesWithDescription();
 
   static Future<void> setAutoDetachKernelDriver(bool enable) =>
       _platform.setAutoDetachKernelDriver(enable);
