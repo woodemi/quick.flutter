@@ -28,6 +28,12 @@ abstract class QuickUsbPlatform extends PlatformInterface {
 
   Future<List<UsbDevice>> getDeviceList();
 
+  Future<List<UsbDeviceDescription>> getDevicesWithDescription(
+      {bool requestPermission = true});
+
+  Future<UsbDeviceDescription> getDeviceDescription(UsbDevice usbDevice,
+      {bool requestPermission = true});
+
   Future<bool> hasPermission(UsbDevice usbDevice);
 
   Future<void> requestPermission(UsbDevice usbDevice);
@@ -51,10 +57,6 @@ abstract class QuickUsbPlatform extends PlatformInterface {
 
   Future<int> bulkTransferOut(
       UsbEndpoint endpoint, Uint8List data, int timeout);
-
-  Future<UsbDeviceDescription> getDeviceDescription(UsbDevice usbDevice);
-
-  Future<List<UsbDeviceDescription>> getDevicesWithDescription();
 
   Future<void> setAutoDetachKernelDriver(bool enable);
 }
