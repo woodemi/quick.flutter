@@ -25,44 +25,23 @@ class QuickUsbAndroid extends QuickUsbPlatform {
 
   @override
   Future<List<UsbDevice>> getDeviceList() async {
-    final devices = await _getDevices(requestPermission: false);
+    List<Map<dynamic, dynamic>> devices = (await _channel.invokeListMethod('getDeviceList'))!;
     return devices.map((device) => UsbDevice.fromMap(device)).toList();
-  }
-
-  Future<List<Map<dynamic, dynamic>>> _getDevices(
-      {required bool requestPermission}) async {
-    final result = (await _channel.invokeListMethod<Map<dynamic, dynamic>>(
-      'getDeviceList',
-      {'requestPermission': requestPermission},
-    ))!;
-    return result;
   }
 
   @override
   Future<List<UsbDeviceDescription>> getDevicesWithDescription({
     bool requestPermission = true,
   }) async {
-    if (requestPermission) {
-      // Get each device description separately, asking permission for each device
-      var devices = await getDeviceList();
-      var result = <UsbDeviceDescription>[];
-      for (var device in devices) {
-        result.add(await getDeviceDescription(device, requestPermission: true));
-      }
-      return result;
-    } else {
-      final devices = await _getDevices(requestPermission: false);
-      return devices
-          .map(
-            (device) => UsbDeviceDescription.fromMap({
-              'device': device,
-              'manufacturer': device['manufacturer'],
-              'product': device['product'],
-              'serialNumber': device['serialNumber'],
-            }),
-          )
-          .toList();
+    var devices = await getDeviceList();
+    var result = <UsbDeviceDescription>[];
+    for (var device in devices) {
+      result.add(await getDeviceDescription(
+        device,
+        requestPermission: requestPermission,
+      ));
     }
+    return result;
   }
 
   @override

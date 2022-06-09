@@ -69,13 +69,10 @@ class QuickUsbPlugin : FlutterPlugin, MethodCallHandler {
         val manager = usbManager ?: return result.error("IllegalState", "usbManager null", null)
         val usbDeviceList = manager.deviceList.entries.map {
           mapOf(
-                  "identifier" to it.key,
-                  "vendorId" to it.value.vendorId,
-                  "productId" to it.value.productId,
-                  "configurationCount" to it.value.configurationCount,
-                  "manufacturer" to it.value.manufacturerName,
-                  "product" to it.value.productName,
-                  "serialNumber" to if (manager.hasPermission(it.value)) it.value.serialNumber else null,
+            "identifier" to it.key,
+            "vendorId" to it.value.vendorId,
+            "productId" to it.value.productId,
+            "configurationCount" to it.value.configurationCount,
           )
         }
         result.success(usbDeviceList)
@@ -87,7 +84,8 @@ class QuickUsbPlugin : FlutterPlugin, MethodCallHandler {
         val device = manager.deviceList[identifier] ?: return result.error("IllegalState", "usbDevice null", null)
         val requestPermission = call.argument<Boolean>("requestPermission")!!;
 
-        if (requestPermission && !manager.hasPermission(device)) {
+        val hasPermission = manager.hasPermission(device)
+        if (requestPermission && !hasPermission) {
           val permissionReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
               context.unregisterReceiver(this)
@@ -105,7 +103,7 @@ class QuickUsbPlugin : FlutterPlugin, MethodCallHandler {
           result.success(mapOf(
             "manufacturer" to device.manufacturerName,
             "product" to device.productName,
-            "serialNumber" to device.serialNumber
+            "serialNumber" to if (hasPermission) device.serialNumber else null,
           ))
         }
       }
