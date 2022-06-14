@@ -5,10 +5,15 @@ import 'src/quick_blue_platform_interface.dart';
 
 export 'src/models.dart';
 export 'src/quick_blue_linux.dart';
+export 'src/quick_blue_platform_interface.dart';
 
-QuickBluePlatform get _platform => QuickBluePlatform.instance;
+QuickBluePlatform get _platformInstance => QuickBluePlatform.instance;
 
 class QuickBlue {
+  static QuickBluePlatform _platform = _platformInstance;
+
+  static void setInstance(QuickBluePlatform instance) => _platform = instance;
+
   static void setLogger(QuickLogger logger) =>
       _platform.setLogger(logger);
 
