@@ -61,7 +61,7 @@ public class QuickBlueDarwin: NSObject, FlutterPlugin {
   }
 
   private lazy var manager: CBCentralManager = {
-      discoveredPeripherals = Dictionary()
+    discoveredPeripherals = Dictionary()
     return CBCentralManager(delegate: self, queue: nil)
   }()
   private var discoveredPeripherals: Dictionary<String, CBPeripheral>!
