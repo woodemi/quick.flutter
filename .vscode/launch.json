@@ -1,0 +1,88 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "quick_blue/debug",
+            "cwd": "packages/quick_blue/example",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "quick_blue/profile",
+            "cwd": "packages/quick_blue/example",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "quick_blue/release",
+            "cwd": "packages/quick_blue/example",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
+        {
+            "name": "quick_usb/debug",
+            "cwd": "packages/quick_usb/example",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "quick_usb/profile",
+            "cwd": "packages/quick_usb/example",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "quick_usb/release",
+            "cwd": "packages/quick_usb/example",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
+        {
+            "name": "quick_scan/debug",
+            "cwd": "packages/quick_scan/example",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "quick_scan/profile",
+            "cwd": "packages/quick_scan/example",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "quick_scan/release",
+            "cwd": "packages/quick_scan/example",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
+        {
+            "name": "quick_notify/debug",
+            "cwd": "packages/quick_notify/example",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "quick_notify/profile",
+            "cwd": "packages/quick_notify/example",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "quick_notify/release",
+            "cwd": "packages/quick_notify/example",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
+    ]
+}
