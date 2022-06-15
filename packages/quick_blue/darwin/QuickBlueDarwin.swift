@@ -28,18 +28,22 @@ extension CBPeripheral {
     }
   }
 
-  public func getCharacteristic(_ characteristic: String, of service: String) -> CBCharacteristic {
+  public func getCharacteristic(_ characteristic: String, of service: String) -> CBCharacteristic? {
     let s = self.services?.first {
       $0.uuid.uuidStr == service || "0000\($0.uuid.uuidStr)-\(GSS_SUFFIX)" == service
     }
     let c = s?.characteristics?.first {
       $0.uuid.uuidStr == characteristic || "0000\($0.uuid.uuidStr)-\(GSS_SUFFIX)" == characteristic
     }
-    return c!
+    return c
   }
 
-  public func setNotifiable(_ bleInputProperty: String, for characteristic: String, of service: String) {
-    setNotifyValue(bleInputProperty != "disabled", for: getCharacteristic(characteristic, of: service))
+  public func setNotifiable(_ bleInputProperty: String, for characteristic: String, of service: String)->Bool? {
+    guard let characteristic = getCharacteristic(characteristic, of: service) else{
+        return nil
+    }
+    setNotifyValue(bleInputProperty != "disabled", for: characteristic)
+    return true
   }
 }
 
@@ -122,7 +126,11 @@ public class QuickBlueDarwin: NSObject, FlutterPlugin {
         result(FlutterError(code: "IllegalArgument", message: "Unknown deviceId:\(deviceId)", details: nil))
         return
       }
-      peripheral.setNotifiable(bleInputProperty, for: characteristic, of: service)
+      guard let isNotifying = peripheral.setNotifiable(bleInputProperty, for: characteristic, of: service)else {
+          result(FlutterError(code: "IllegalArgument", message: "Characteristic not found :\(characteristic)", details: nil))
+          return
+      }
+      print("setNotified: \(isNotifying)")
       result(nil)
     case "readValue":
       let arguments = call.arguments as! Dictionary<String, Any>
@@ -133,7 +141,11 @@ public class QuickBlueDarwin: NSObject, FlutterPlugin {
         result(FlutterError(code: "IllegalArgument", message: "Unknown deviceId:\(deviceId)", details: nil))
         return
       }
-      peripheral.readValue(for: peripheral.getCharacteristic(characteristic, of: service))
+      guard let characteristic = peripheral.getCharacteristic(characteristic, of: service) else{
+            result(FlutterError(code: "IllegalArgument", message: "Characteristic not found :\(characteristic)", details: nil))
+            return
+      }
+      peripheral.readValue(for: characteristic)
       result(nil)
     case "writeValue":
       let arguments = call.arguments as! Dictionary<String, Any>
@@ -147,7 +159,11 @@ public class QuickBlueDarwin: NSObject, FlutterPlugin {
         return
       }
       let type = bleOutputProperty == "withoutResponse" ? CBCharacteristicWriteType.withoutResponse : CBCharacteristicWriteType.withResponse
-      peripheral.writeValue(value.data, for: peripheral.getCharacteristic(characteristic, of: service), type: type)
+      guard let characteristic = peripheral.getCharacteristic(characteristic, of: service) else{
+            result(FlutterError(code: "IllegalArgument", message: "Characteristic not found :\(characteristic)", details: nil))
+            return
+      }
+      peripheral.writeValue(value.data, for: characteristic, type: type)
       result(nil)
     case "requestMtu":
       let arguments = call.arguments as! Dictionary<String, Any>
@@ -241,13 +257,20 @@ extension QuickBlueDarwin: CBPeripheralDelegate {
       "deviceId": peripheral.uuid.uuidString,
       "ServiceState": "discovered",
       "service": service.uuid.uuidStr,
-      "characteristics": service.characteristics!.map { $0.uuid.uuidStr }
+      "characteristics": service.characteristics!.map { $0.uuid.uuidStr },
+      "error": String(describing: error)
     ])
   }
 
   public func peripheral(_ peripheral: CBPeripheral, didWriteValueFor characteristic: CBCharacteristic, error: Error?) {
     let data = characteristic.value as NSData?
     print("peripheral:didWriteValueForCharacteristic \(characteristic.uuid.uuidStr) \(String(describing: data)) error: \(String(describing: error))")
+     self.messageConnector.sendMessage([
+        "deviceId": peripheral.uuid.uuidString,
+        "write": "Success",
+        "characteristic": characteristic.uuid.uuidStr,
+        "error": String(describing: error)
+      ])
   }
 
   public func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
@@ -255,6 +278,7 @@ extension QuickBlueDarwin: CBPeripheralDelegate {
     print("peripheral:didUpdateValueForCharacteristic \(characteristic.uuid) \(String(describing: data)) error: \(String(describing: error))")
     self.messageConnector.sendMessage([
       "deviceId": peripheral.uuid.uuidString,
+      "error": String(describing: error),
       "characteristicValue": [
         "characteristic": characteristic.uuid.uuidStr,
         "value": FlutterStandardTypedData(bytes: characteristic.value!)
