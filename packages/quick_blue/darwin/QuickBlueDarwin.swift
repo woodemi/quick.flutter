@@ -60,11 +60,8 @@ public class QuickBlueDarwin: NSObject, FlutterPlugin {
     instance.messageConnector = messageConnector
   }
 
-  private lazy var manager: CBCentralManager = {
-    discoveredPeripherals = Dictionary()
-    return CBCentralManager(delegate: self, queue: nil)
-  }()
-  private var discoveredPeripherals: Dictionary<String, CBPeripheral>!
+  private lazy var manager: CBCentralManager = { CBCentralManager(delegate: self, queue: nil) }()
+  private var discoveredPeripherals = Dictionary<String, CBPeripheral>()
 
   private var scanResultSink: FlutterEventSink?
   private var messageConnector: FlutterBasicMessageChannel!
