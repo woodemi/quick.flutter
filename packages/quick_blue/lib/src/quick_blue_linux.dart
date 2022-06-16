@@ -96,9 +96,9 @@ class QuickBlueLinux extends QuickBluePlatform {
     var device = _client.devices.firstWhereOrNull((device) => device.address == deviceId);
     if (device != null) {
       if (!device.paired) {
-        device.pair().then((voi) => device.connect().then((voi) => log("Connected!")));
+        device.pair().then((voi) => device.connect().then((voi) => _log("Connected!")));
       } else {
-        device.connect().then((voi) => log("Connected!"));
+        device.connect().then((voi) => _log("Connected!"));
       }
     }
   }
@@ -107,7 +107,7 @@ class QuickBlueLinux extends QuickBluePlatform {
   void disconnect(String deviceId) {
     var device = _client.devices.firstWhereOrNull((device) => device.address == deviceId);
     if (device != null) {
-      device.disconnect().then((voi) => log("Disconnected!"));
+      device.disconnect().then((voi) => _log("Disconnected!"));
     }
   }
 
@@ -133,7 +133,7 @@ class QuickBlueLinux extends QuickBluePlatform {
   void discoverServices(String deviceId) {
     var device = _getDeviceById(deviceId);
     if (device != null) {
-      log("Services ${device.gattServices.length}");
+      _log("Services ${device.gattServices.length}");
       for (var gattService in device.gattServices) {
         List<String> characteristics = [];
         for (var characteristic in gattService.characteristics) {
