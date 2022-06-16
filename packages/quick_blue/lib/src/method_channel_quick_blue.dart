@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
@@ -92,14 +91,6 @@ class MethodChannelQuickBlue extends QuickBluePlatform {
       onValueChanged?.call(deviceId, characteristic, value);
     } else if (message['mtuConfig'] != null) {
       _mtuConfigController.add(message['mtuConfig']);
-    } else if (message['write'] != null) {
-      var err = message['error'];
-      String? error = (err == null || err == 'nil') ? null : message['error'];
-      _writeResponseController.add({
-        'deviceId': message['deviceId'],
-        'characteristic': message['characteristic'],
-        'error': error,
-      });
     }
   }
 
@@ -122,16 +113,8 @@ class MethodChannelQuickBlue extends QuickBluePlatform {
     }).then((_) => _log('readValue invokeMethod success'));
   }
 
-  // FIXME Close
-  final _writeResponseController = StreamController.broadcast();
-
   @override
-  Future<void> writeValue(
-      String deviceId,
-      String service,
-      String characteristic,
-      Uint8List value,
-      BleOutputProperty bleOutputProperty) async {
+  Future<void> writeValue(String deviceId, String service, String characteristic, Uint8List value, BleOutputProperty bleOutputProperty) async {
     _method.invokeMethod('writeValue', {
       'deviceId': deviceId,
       'service': service,
@@ -144,23 +127,6 @@ class MethodChannelQuickBlue extends QuickBluePlatform {
       // Characteristic sometimes unavailable on Android
       throw onError;
     });
-    // For MacOS and IOS , this will capture result and auto close after one second
-    // Android Errors can be captured in .cathError
-    // need to check for Windows
-    if (!(Platform.isMacOS || Platform.isIOS)) return;
-    String? error = await _writeResponseController.stream
-        .where((event) =>
-            event['deviceId'] == deviceId &&
-            event['characteristic'] == characteristic)
-        .map((event) => event['error'])
-        .timeout(
-          const Duration(seconds: 1),
-          onTimeout: (sink) => sink.add(null),
-        )
-        .first;
-    if (error != null) {
-      throw error;
-    }
   }
 
   // FIXME Close
