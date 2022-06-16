@@ -28,18 +28,21 @@ extension CBPeripheral {
     }
   }
 
-  public func getCharacteristic(_ characteristic: String, of service: String) -> CBCharacteristic {
+  public func getCharacteristic(_ characteristic: String, of service: String) -> CBCharacteristic? {
     let s = self.services?.first {
       $0.uuid.uuidStr == service || "0000\($0.uuid.uuidStr)-\(GSS_SUFFIX)" == service
     }
     let c = s?.characteristics?.first {
       $0.uuid.uuidStr == characteristic || "0000\($0.uuid.uuidStr)-\(GSS_SUFFIX)" == characteristic
     }
-    return c!
+    return c
   }
 
   public func setNotifiable(_ bleInputProperty: String, for characteristic: String, of service: String) {
-    setNotifyValue(bleInputProperty != "disabled", for: getCharacteristic(characteristic, of: service))
+    guard let characteristic = getCharacteristic(characteristic, of: service) else{
+        return
+    }
+    setNotifyValue(bleInputProperty != "disabled", for: characteristic)
   }
 }
 
@@ -116,7 +119,11 @@ public class QuickBlueDarwin: NSObject, FlutterPlugin {
         result(FlutterError(code: "IllegalArgument", message: "Unknown deviceId:\(deviceId)", details: nil))
         return
       }
-      peripheral.setNotifiable(bleInputProperty, for: characteristic, of: service)
+      guard let c = peripheral.getCharacteristic(characteristic, of: service) else {
+        result(FlutterError(code: "IllegalArgument", message: "Unknown characteristic:\(characteristic)", details: nil))
+        return
+      }
+      peripheral.setNotifyValue(bleInputProperty != "disabled", for: c)
       result(nil)
     case "readValue":
       let arguments = call.arguments as! Dictionary<String, Any>
@@ -127,7 +134,11 @@ public class QuickBlueDarwin: NSObject, FlutterPlugin {
         result(FlutterError(code: "IllegalArgument", message: "Unknown deviceId:\(deviceId)", details: nil))
         return
       }
-      peripheral.readValue(for: peripheral.getCharacteristic(characteristic, of: service))
+      guard let c = peripheral.getCharacteristic(characteristic, of: service) else {
+        result(FlutterError(code: "IllegalArgument", message: "Unknown characteristic:\(characteristic)", details: nil))
+        return
+      }
+      peripheral.readValue(for: c)
       result(nil)
     case "writeValue":
       let arguments = call.arguments as! Dictionary<String, Any>
@@ -141,7 +152,11 @@ public class QuickBlueDarwin: NSObject, FlutterPlugin {
         return
       }
       let type = bleOutputProperty == "withoutResponse" ? CBCharacteristicWriteType.withoutResponse : CBCharacteristicWriteType.withResponse
-      peripheral.writeValue(value.data, for: peripheral.getCharacteristic(characteristic, of: service), type: type)
+      guard let c = peripheral.getCharacteristic(characteristic, of: service) else {
+        result(FlutterError(code: "IllegalArgument", message: "Unknown characteristic:\(characteristic)", details: nil))
+        return
+      }
+      peripheral.writeValue(value.data, for: c, type: type)
       result(nil)
     case "requestMtu":
       let arguments = call.arguments as! Dictionary<String, Any>
