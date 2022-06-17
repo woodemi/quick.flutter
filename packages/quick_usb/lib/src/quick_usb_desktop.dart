@@ -160,8 +160,8 @@ class _QuickUsbDesktop extends QuickUsbPlatform {
   }
 
   @override
-  Future<void> requestPermission(UsbDevice usbDevice) async {
-    return;
+  Future<bool> requestPermission(UsbDevice usbDevice) async {
+    return true;
   }
 
   @override

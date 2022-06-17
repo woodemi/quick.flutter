@@ -37,7 +37,7 @@ class QuickUsb {
   static Future<bool> hasPermission(UsbDevice usbDevice) =>
       _platform.hasPermission(usbDevice);
 
-  static Future<void> requestPermission(UsbDevice usbDevice) =>
+  static Future<bool> requestPermission(UsbDevice usbDevice) =>
       _platform.requestPermission(usbDevice);
 
   static Future<bool> openDevice(UsbDevice usbDevice) =>

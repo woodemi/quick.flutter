@@ -67,8 +67,8 @@ class QuickUsbAndroid extends QuickUsbPlatform {
   }
 
   @override
-  Future<void> requestPermission(UsbDevice usbDevice) {
-    return _channel.invokeMethod('requestPermission', usbDevice.toMap());
+  Future<bool> requestPermission(UsbDevice usbDevice) async {
+    return await _channel.invokeMethod('requestPermission', usbDevice.toMap());
   }
 
   @override

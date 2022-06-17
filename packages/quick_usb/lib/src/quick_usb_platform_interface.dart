@@ -36,7 +36,7 @@ abstract class QuickUsbPlatform extends PlatformInterface {
 
   Future<bool> hasPermission(UsbDevice usbDevice);
 
-  Future<void> requestPermission(UsbDevice usbDevice);
+  Future<bool> requestPermission(UsbDevice usbDevice);
 
   Future<bool> openDevice(UsbDevice usbDevice);
 
