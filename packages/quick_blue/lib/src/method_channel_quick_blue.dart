@@ -40,8 +40,8 @@ class MethodChannelQuickBlue extends QuickBluePlatform {
 
   @override
   Future<void> stopScan() async {
-    await _method.invokeMethod('startScan');
-    _log('startScan invokeMethod success');
+    await _method.invokeMethod('stopScan');
+    _log('stopScan invokeMethod success');
   }
 
   final Stream<dynamic> _scanResultStream = _eventScanResult.receiveBroadcastStream({'name': 'scanResult'});
