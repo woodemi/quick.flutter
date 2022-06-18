@@ -123,6 +123,11 @@ class QuickBlueLinux extends QuickBluePlatform {
     // TODO: implement requestMtu
     throw UnimplementedError();
   }
+  
+  @override
+  void pair(String deviceId) {
+    // TODO: implement pair
+  }
 }
 
 extension BlueZDeviceExtension on BlueZDevice {

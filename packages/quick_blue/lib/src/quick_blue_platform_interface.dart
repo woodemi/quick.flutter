@@ -43,6 +43,8 @@ abstract class QuickBluePlatform extends PlatformInterface {
 
   void connect(String deviceId);
 
+  void pair(String deviceId);
+
   void disconnect(String deviceId);
 
   OnConnectionChanged? onConnectionChanged;
