@@ -76,6 +76,7 @@ class _PeripheralDetailPageState extends State<PeripheralDetailPage> {
       ),
       body: Column(
         children: [
+          const SizedBox(height: 10),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: <Widget>[
@@ -86,6 +87,12 @@ class _PeripheralDetailPageState extends State<PeripheralDetailPage> {
                 },
               ),
               ElevatedButton(
+                child: const Text('pair'),
+                onPressed: () {
+                  QuickBlue.pair(widget.deviceId);
+                },
+              ),
+              ElevatedButton(
                 child: const Text('disconnect'),
                 onPressed: () {
                   QuickBlue.disconnect(widget.deviceId);
@@ -93,6 +100,7 @@ class _PeripheralDetailPageState extends State<PeripheralDetailPage> {
               ),
             ],
           ),
+          const Divider(),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: <Widget>[
@@ -102,15 +110,15 @@ class _PeripheralDetailPageState extends State<PeripheralDetailPage> {
                   QuickBlue.discoverServices(widget.deviceId);
                 },
               ),
-            ],
-          ),
-          ElevatedButton(
+              ElevatedButton(
             child: const Text('setNotifiable'),
             onPressed: () {
               QuickBlue.setNotifiable(
                   widget.deviceId, WOODEMI_SERV__COMMAND, WOODEMI_CHAR__COMMAND_RESPONSE,
                   BleInputProperty.indication);
             },
+          ),
+          ],
           ),
           TextField(
             controller: serviceUUID,
