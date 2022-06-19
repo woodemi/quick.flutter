@@ -121,7 +121,6 @@ class QuickUsbPlugin : FlutterPlugin, MethodCallHandler {
           context.registerReceiver(receiver, IntentFilter(ACTION_USB_PERMISSION))
           manager.requestPermission(device, pendingPermissionIntent(context))
         }
-        result.success(null)
       }
       "openDevice" -> {
         val manager = usbManager ?: return result.error("IllegalState", "usbManager null", null)
