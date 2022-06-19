@@ -17,8 +17,8 @@ import io.flutter.plugin.common.MethodChannel.Result
 private const val ACTION_USB_PERMISSION = "com.example.quick_usb.USB_PERMISSION"
 
 private val pendingIntentFlag =
-  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+    PendingIntent.FLAG_MUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
   } else {
     PendingIntent.FLAG_UPDATE_CURRENT
   }
@@ -51,17 +51,6 @@ class QuickUsbPlugin : FlutterPlugin, MethodCallHandler {
 
   private var usbDevice: UsbDevice? = null
   private var usbDeviceConnection: UsbDeviceConnection? = null
-
-  private val receiver = object : BroadcastReceiver() {
-    override fun onReceive(context: Context, intent: Intent) {
-      context.unregisterReceiver(this)
-      val device = intent.getParcelableExtra<UsbDevice>(UsbManager.EXTRA_DEVICE)
-      val granted = intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)
-      if (!granted) {
-        println("Permission denied: ${device?.deviceName}")
-      }
-    }
-  }
 
   override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
     when (call.method) {
@@ -118,11 +107,20 @@ class QuickUsbPlugin : FlutterPlugin, MethodCallHandler {
         val manager = usbManager ?: return result.error("IllegalState", "usbManager null", null)
         val identifier = call.argument<String>("identifier")
         val device = manager.deviceList[identifier]
-        if (!manager.hasPermission(device)) {
+        if (manager.hasPermission(device)) {
+          result.success(true)
+        } else {
+          val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+              context.unregisterReceiver(this)
+              val usbDevice = intent.getParcelableExtra<UsbDevice>(UsbManager.EXTRA_DEVICE)
+              val granted = intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)
+              result.success(granted);
+            }
+          }
           context.registerReceiver(receiver, IntentFilter(ACTION_USB_PERMISSION))
           manager.requestPermission(device, pendingPermissionIntent(context))
         }
-        result.success(null)
       }
       "openDevice" -> {
         val manager = usbManager ?: return result.error("IllegalState", "usbManager null", null)

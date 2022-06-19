@@ -7,7 +7,8 @@ A cross-platform (Android/Windows/macOS/Linux) USB plugin for Flutter
 - [List devices](#list-devices)
 - [List devices with additional description](#list-devices-with-additional-description)
 - [Get device description](#get-device-description)
-- [Check/Request permission](#checkrequest-permission)
+- [Check permission](#check-permission)
+- [Request permission](#request-permission)
 - [Open/Close device](#openclose-device)
 - [Get/Set configuration](#getset-configuration)
 - [Claim/Release interface](#claimrelease-interface)
@@ -59,15 +60,25 @@ for permission for each device if needed. If you do not require the serial numbe
 var description = await QuickUsb.getDeviceDescription(requestPermission: false);
 ```
 
-### Check/Request permission
+### Check permission
 
 _**Android Only**_
 
 ```dart
 var hasPermission = await QuickUsb.hasPermission(device);
 print('hasPermission $hasPermission');
-// ...
-await QuickUsb.requestPermission(device);
+```
+
+### Request permission
+
+_**Android Only**_
+
+Request permission for a device. The permission dialog is not shown
+if the app already has permission to access the device.
+
+```dart
+var hasPermission = await QuickUsb.requestPermission(device);
+print('hasPermission $hasPermission');
 ```
 
 ### Open/Close device
