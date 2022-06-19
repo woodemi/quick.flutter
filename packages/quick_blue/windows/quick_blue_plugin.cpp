@@ -281,14 +281,15 @@ void QuickBluePlugin::HandleMethodCall(
     auto bluetoothAgent = *it->second;
     auto async_c = bluetoothAgent.GetCharacteristicAsync(service, characteristic);
     async_c.Completed([&, result_pointer = result.get()]
-        (IAsyncOperation<GattCharacteristic> const& sender, AsyncStatus const args){
+        (IAsyncOperation<GattCharacteristic> const& sender, AsyncStatus const args) {
+          // FIXME https://github.com/woodemi/quick.flutter/pull/31#issuecomment-1159213902
           auto c = sender.GetResults();
           if (c == nullptr) {
-            result->Error("IllegalArgument", "Unknown characteristic:" + characteristic);
+            result_pointer->Error("IllegalArgument", "Unknown characteristic:" + characteristic);
             return;
           }
           SetNotifiableAsync(bluetoothAgent, c, bleInputProperty);
-          result->Success(nullptr);
+          result_pointer->Success(nullptr);
         });
   } else if (method_name.compare("readValue") == 0) {
     auto args = std::get<EncodableMap>(*method_call.arguments());
@@ -304,14 +305,15 @@ void QuickBluePlugin::HandleMethodCall(
     auto bluetoothAgent = *it->second;
     auto async_c = bluetoothAgent.GetCharacteristicAsync(service, characteristic);
     async_c.Completed([&, result_pointer = result.get()]
-        (IAsyncOperation<GattCharacteristic> const& sender, AsyncStatus const args){
+        (IAsyncOperation<GattCharacteristic> const& sender, AsyncStatus const args) {
+          // FIXME https://github.com/woodemi/quick.flutter/pull/31#issuecomment-1159213902
           auto c = sender.GetResults();
           if (c == nullptr) {
-            result->Error("IllegalArgument", "Unknown characteristic:" + characteristic);
+            result_pointer->Error("IllegalArgument", "Unknown characteristic:" + characteristic);
             return;
           }
           ReadValueAsync(c);
-          result->Success(nullptr);
+          result_pointer->Success(nullptr);
         });
   } else if (method_name.compare("writeValue") == 0) {
     auto args = std::get<EncodableMap>(*method_call.arguments());
@@ -329,14 +331,15 @@ void QuickBluePlugin::HandleMethodCall(
     auto bluetoothAgent = *it->second;
     auto async_c = bluetoothAgent.GetCharacteristicAsync(service, characteristic);
     async_c.Completed([&, result_pointer = result.get()]
-        (IAsyncOperation<GattCharacteristic> const& sender, AsyncStatus const args){
+        (IAsyncOperation<GattCharacteristic> const& sender, AsyncStatus const args) {
+          // FIXME https://github.com/woodemi/quick.flutter/pull/31#issuecomment-1159213902
           auto c = sender.GetResults();
           if (c == nullptr) {
-            result->Error("IllegalArgument", "Unknown characteristic:" + characteristic);
+            result_pointer->Error("IllegalArgument", "Unknown characteristic:" + characteristic);
             return;
           }
           WriteValueAsync(c, value, bleOutputProperty);
-          result->Success(nullptr);
+          result_pointer->Success(nullptr);
         });
   } else if (method_name.compare("requestMtu") == 0) {
     auto args = std::get<EncodableMap>(*method_call.arguments());
