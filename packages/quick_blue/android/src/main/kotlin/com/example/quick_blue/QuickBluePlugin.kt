@@ -112,7 +112,9 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
         val bleInputProperty = call.argument<String>("bleInputProperty")!!
         val gatt = knownGatts.find { it.device.address == deviceId }
                 ?: return result.error("IllegalArgument", "Unknown deviceId: $deviceId", null)
-        gatt.setNotifiable(service to characteristic, bleInputProperty)
+        val c = gatt.getCharacteristic(service, characteristic)
+                ?: return result.error("IllegalArgument", "Unknown characteristic: $characteristic", null)
+        gatt.setNotifiable(c, bleInputProperty)
         result.success(null)
       }
       "readValue" -> {
@@ -121,10 +123,9 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
         val characteristic = call.argument<String>("characteristic")!!
         val gatt = knownGatts.find { it.device.address == deviceId }
                 ?: return result.error("IllegalArgument", "Unknown deviceId: $deviceId", null)
-        val readResult = gatt.getCharacteristic(service to characteristic)?.let {
-          gatt.readCharacteristic(it)
-        }
-        if (readResult == true)
+        val c = gatt.getCharacteristic(service, characteristic)
+                ?: return result.error("IllegalArgument", "Unknown characteristic: $characteristic", null)
+        if (gatt.readCharacteristic(c))
           result.success(null)
         else
           result.error("Characteristic unavailable", null, null)
@@ -136,11 +137,10 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
         val value = call.argument<ByteArray>("value")!!
         val gatt = knownGatts.find { it.device.address == deviceId }
                 ?: return result.error("IllegalArgument", "Unknown deviceId: $deviceId", null)
-        val writeResult = gatt.getCharacteristic(service to characteristic)?.let {
-          it.value = value
-          gatt.writeCharacteristic(it)
-        }
-        if (writeResult == true)
+        val c = gatt.getCharacteristic(service, characteristic)
+                ?: return result.error("IllegalArgument", "Unknown characteristic: $characteristic", null)
+        c.value = value
+        if (gatt.writeCharacteristic(c))
           result.success(null)
         else
           result.error("Characteristic unavailable", null, null)
@@ -286,13 +286,13 @@ val ScanResult.manufacturerDataHead: ByteArray?
 fun Short.toByteArray(byteOrder: ByteOrder = ByteOrder.LITTLE_ENDIAN): ByteArray =
         ByteBuffer.allocate(2 /*Short.SIZE_BYTES*/).order(byteOrder).putShort(this).array()
 
-fun BluetoothGatt.getCharacteristic(serviceCharacteristic: Pair<String, String>) =
-        getService(UUID.fromString(serviceCharacteristic.first)).getCharacteristic(UUID.fromString(serviceCharacteristic.second))
+fun BluetoothGatt.getCharacteristic(service: String, characteristic: String): BluetoothGattCharacteristic? =
+        getService(UUID.fromString(service)).getCharacteristic(UUID.fromString(characteristic))
 
 private val DESC__CLIENT_CHAR_CONFIGURATION = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
 
-fun BluetoothGatt.setNotifiable(serviceCharacteristic: Pair<String, String>, bleInputProperty: String) {
-  val descriptor = getCharacteristic(serviceCharacteristic).getDescriptor(DESC__CLIENT_CHAR_CONFIGURATION)
+fun BluetoothGatt.setNotifiable(gattCharacteristic: BluetoothGattCharacteristic, bleInputProperty: String) {
+  val descriptor = gattCharacteristic.getDescriptor(DESC__CLIENT_CHAR_CONFIGURATION)
   val (value, enable) = when (bleInputProperty) {
     "notification" -> BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE to true
     "indication" -> BluetoothGattDescriptor.ENABLE_INDICATION_VALUE to true
