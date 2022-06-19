@@ -79,7 +79,7 @@ public class QuickBlueDarwin: NSObject, FlutterPlugin {
     case "stopScan":
       manager.stopScan()
       result(nil)
-        case "connect":
+    case "connect":
       let arguments = call.arguments as! Dictionary<String, Any>
       let deviceId = arguments["deviceId"] as! String
       guard let peripheral = discoveredPeripherals[deviceId] else {
@@ -200,12 +200,22 @@ extension QuickBlueDarwin: CBCentralManagerDelegate {
       "ConnectionState": "connected",
     ])
   }
+
+  public func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral,error: Error?) {
+    print("centralManager:didFailToConnect \(peripheral.uuid.uuidString) error: \(String(describing: error))")
+    messageConnector.sendMessage([
+      "deviceId": peripheral.uuid.uuidString,
+      "ConnectionState": "disconnected",
+      "error": String(describing: error)
+    ])
+  }
     
   public func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
     print("centralManager:didDisconnectPeripheral: \(peripheral.uuid.uuidString) error: \(String(describing: error))")
     messageConnector.sendMessage([
       "deviceId": peripheral.uuid.uuidString,
       "ConnectionState": "disconnected",
+      "error": String(describing: error)
     ])
   }
 }
@@ -248,6 +258,7 @@ extension QuickBlueDarwin: CBPeripheralDelegate {
     }
     self.messageConnector.sendMessage([
       "deviceId": peripheral.uuid.uuidString,
+      "error": String(describing: error),
       "ServiceState": "discovered",
       "service": service.uuid.uuidStr,
       "characteristics": service.characteristics!.map { $0.uuid.uuidStr }
@@ -257,6 +268,12 @@ extension QuickBlueDarwin: CBPeripheralDelegate {
   public func peripheral(_ peripheral: CBPeripheral, didWriteValueFor characteristic: CBCharacteristic, error: Error?) {
     let data = characteristic.value as NSData?
     print("peripheral:didWriteValueForCharacteristic \(characteristic.uuid.uuidStr) \(String(describing: data)) error: \(String(describing: error))")
+    self.messageConnector.sendMessage([
+        "deviceId": peripheral.uuid.uuidString,
+        "write": "Success",
+        "characteristic": characteristic.uuid.uuidStr,
+        "error": String(describing: error)
+    ])
   }
 
   public func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
@@ -264,6 +281,7 @@ extension QuickBlueDarwin: CBPeripheralDelegate {
     print("peripheral:didUpdateValueForCharacteristic \(characteristic.uuid) \(String(describing: data)) error: \(String(describing: error))")
     self.messageConnector.sendMessage([
       "deviceId": peripheral.uuid.uuidString,
+      "error": String(describing: error),
       "characteristicValue": [
         "characteristic": characteristic.uuid.uuidStr,
         "value": FlutterStandardTypedData(bytes: characteristic.value!)

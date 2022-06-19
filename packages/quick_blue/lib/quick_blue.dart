@@ -39,6 +39,10 @@ class QuickBlue {
     _platform.onConnectionChanged = onConnectionChanged;
   }
 
+  static void setWriteValueHandler(OnWrite? onWrite) {
+    _platform.onWrite = onWrite;
+  }
+
   static void discoverServices(String deviceId) => _platform.discoverServices(deviceId);
 
   static void setServiceHandler(OnServiceDiscovered? onServiceDiscovered) {
