@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'src/quick_blue_platform_interface.dart';
@@ -14,6 +15,13 @@ class QuickBlue {
 
   static Future<bool> isBluetoothAvailable() =>
       _platform.isBluetoothAvailable();
+
+  static void setAvailabilityHandler(OnAvailabilityChanged? onAvailabilityChanged) {
+    if (!Platform.isIOS && !Platform.isMacOS) {
+      throw UnimplementedError('setAvailabilityHandler is only implemented on iOS and macOS');
+    }
+    _platform.onAvailabilityChanged = onAvailabilityChanged;
+  }
 
   static Future<void> startScan() => _platform.startScan();
 

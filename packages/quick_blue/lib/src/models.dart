@@ -1,5 +1,35 @@
 import 'dart:typed_data';
 
+class AvailabilityState {
+  static const unknown = AvailabilityState._(0);
+  static const resetting = AvailabilityState._(1);
+  static const unsupported = AvailabilityState._(2);
+  static const unauthorized = AvailabilityState._(3);
+  static const poweredOff = AvailabilityState._(4);
+  static const poweredOn = AvailabilityState._(5);
+
+  final int value;
+
+  const AvailabilityState._(this.value);
+
+  static AvailabilityState parse(int value) {
+    if (value == unknown.value) {
+      return unknown;
+    } else if (value == resetting.value) {
+      return resetting;
+    } else if (value == unsupported.value) {
+      return unsupported;
+    } else if (value == unauthorized.value) {
+      return unauthorized;
+    } else if (value == poweredOff.value) {
+      return poweredOff;
+    } else if (value == poweredOn.value) {
+      return poweredOn;
+    }
+    throw ArgumentError.value(value);
+  }
+}
+
 class BlueScanResult {
   final String name;
   String deviceId;
@@ -7,7 +37,8 @@ class BlueScanResult {
   final Uint8List? _manufacturerData;
   int rssi;
 
-  Uint8List get manufacturerDataHead => _manufacturerDataHead ?? Uint8List.fromList([]);
+  Uint8List get manufacturerDataHead =>
+      _manufacturerDataHead ?? Uint8List.fromList([]);
 
   Uint8List get manufacturerData => _manufacturerData ?? manufacturerDataHead;
 

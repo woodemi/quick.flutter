@@ -25,6 +25,9 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
+    if (Platform.isIOS || Platform.isMacOS) {
+      QuickBlue.setAvailabilityHandler(_handleAvailabilityChange);
+    }
     if (kDebugMode) {
       QuickBlue.setLogger(Logger('quick_blue_example'));
     }
@@ -119,5 +122,9 @@ class _MyAppState extends State<MyApp> {
       );
     }
     return Container();
+  }
+
+  void _handleAvailabilityChange(AvailabilityState state) {
+    debugPrint('_handleAvailabilityChange ${state.value}');
   }
 }
