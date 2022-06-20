@@ -1,18 +1,111 @@
 # quick_blue
 
-A new flutter plugin project.
+A cross-platform (Android/iOS/macOS/Windows/Linux) BluetoothLE plugin for Flutter
 
-## Getting Started
+# Usage
 
-This project is a starting point for a Flutter
-[plug-in package](https://flutter.dev/developing-packages/),
-a specialized package that includes platform-specific implementation code for
-Android and/or iOS.
+- [Receive BLE availability changes](#receive-ble-availability-changes)
+- [Scan BLE peripheral](#scan-ble-peripheral)
+- [Connect BLE peripheral](#connect-ble-peripheral)
+- [Discover services of BLE peripheral](#discover-services-of-ble-peripheral)
+- [Transfer data between BLE central & peripheral](#transfer-data-between-ble-central--peripheral)
 
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+| API | Android | iOS | macOS | Windows | Linux |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| setAvailabilityHandler |  | ✔️ | ✔️ |  |  |
+| isBluetoothAvailable | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ |
+| startScan/stopScan | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ |
+| connect/disconnect | ✔️ | ✔️ | ✔️ | ✔️ |  |
+| discoverServices | ✔️ | ✔️ | ✔️ | ✔️ |  |
+| setNotifiable | ✔️ | ✔️ | ✔️ | ✔️ |  |
+| readValue | ✔️ | ✔️ | ✔️ | ✔️ |  |
+| writeValue | ✔️ | ✔️ | ✔️ | ✔️ |  |
+| requestMtu | ✔️ | ✔️ | ✔️ | ✔️ |  |
 
-The plugin project was generated without specifying the `--platforms` flag, no platforms are currently supported.
-To add platforms, run `flutter create -t plugin --platforms <platforms> .` under the same
-directory. You can also find a detailed instruction on how to add platforms in the `pubspec.yaml` at https://flutter.dev/docs/development/packages-and-plugins/developing-packages#plugin-platforms.
+> * Windows' APIs are little different on `discoverServices`: https://github.com/woodemi/quick_blue/issues/76
+
+## Receive BLE availability changes
+
+iOS/macOS
+```dart
+QuickBlue.setAvailabilityHandler(_handleAvailabilityChange);
+
+void _handleAvailabilityChange(AvailabilityState state) {
+  debugPrint('_handleAvailabilityChange ${state.value}');
+}
+```
+
+
+## Scan BLE peripheral
+
+Android/iOS/macOS/Windows/Linux
+
+```dart
+QuickBlue.scanResultStream.listen((result) {
+  print('onScanResult $result');
+});
+
+QuickBlue.startScan();
+// ...
+QuickBlue.stopScan();
+```
+
+## Connect BLE peripheral
+
+Connect to `deviceId`, received from `QuickBlue.scanResultStream`
+
+```dart
+QuickBlue.setConnectionHandler(_handleConnectionChange);
+
+void _handleConnectionChange(String deviceId, BlueConnectionState state) {
+  print('_handleConnectionChange $deviceId, $state');
+}
+
+QuickBlue.connect(deviceId);
+// ...
+QuickBlue.disconnect(deviceId);
+```
+
+## Discover services of BLE peripheral
+
+Discover services od `deviceId`
+
+```dart
+QuickBlue.setServiceHandler(_handleServiceDiscovery);
+
+void _handleServiceDiscovery(String deviceId, String serviceId) {
+  print('_handleServiceDiscovery $deviceId, $serviceId');
+}
+
+QuickBlue.discoverServices(deviceId);
+```
+
+## Transfer data between BLE central & peripheral
+
+- Pull data from peripheral of `deviceId`
+
+> Data would receive within value handler of `QuickBlue.setValueHandler`
+> Because it is how [peripheral(_:didUpdateValueFor:error:)](https://developer.apple.com/documentation/corebluetooth/cbperipheraldelegate/1518708-peripheral) work on iOS/macOS
+
+```dart
+// Data would receive from value handler of `QuickBlue.setValueHandler`
+QuickBlue.readValue(deviceId, serviceId, characteristicId);
+```
+
+- Send data to peripheral of `deviceId`
+
+```dart
+QuickBlue.writeValue(deviceId, serviceId, characteristicId, value);
+```
+
+- Receive data from peripheral of `deviceId`
+
+```dart
+QuickBlue.setValueHandler(_handleValueChange);
+
+void _handleValueChange(String deviceId, String characteristicId, Uint8List value) {
+  print('_handleValueChange $deviceId, $characteristicId, ${hex.encode(value)}');
+}
+
+QuickBlue.setNotifiable(deviceId, serviceId, characteristicId, true);
+```
