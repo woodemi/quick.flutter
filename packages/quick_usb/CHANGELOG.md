@@ -1,3 +1,7 @@
+## 0.4.0
+
+- Fix `requestPermission` compatibility below Android 11
+
 ## 0.4.0-dev.0
 
 - Move to `quick.flutter` mono repo
