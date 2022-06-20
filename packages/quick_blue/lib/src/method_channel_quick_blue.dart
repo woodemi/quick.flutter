@@ -72,7 +72,10 @@ class MethodChannelQuickBlue extends QuickBluePlatform {
 
   Future<void> _handleConnectorMessage(dynamic message) async {
     _log('_handleConnectorMessage $message', logLevel: Level.ALL);
-    if (message['ConnectionState'] != null) {
+    if (message['AvailabilityState'] != null) {
+      AvailabilityState availabilityState = AvailabilityState.parse(message['AvailabilityState']);
+      onAvailabilityChanged?.call(availabilityState);
+    } else if (message['ConnectionState'] != null) {
       String deviceId = message['deviceId'];
       BlueConnectionState connectionState = BlueConnectionState.parse(message['ConnectionState']);
       onConnectionChanged?.call(deviceId, connectionState);

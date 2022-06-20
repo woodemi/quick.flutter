@@ -177,7 +177,9 @@ public class QuickBlueDarwin: NSObject, FlutterPlugin {
 
 extension QuickBlueDarwin: CBCentralManagerDelegate {
   public func centralManagerDidUpdateState(_ central: CBCentralManager) {
-    print("centralManagerDidUpdateState \(central.state.rawValue)")
+    messageConnector.sendMessage([
+      "AvailabilityState": central.state.rawValue,
+    ])
   }
 
   public func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String: Any], rssi RSSI: NSNumber) {
