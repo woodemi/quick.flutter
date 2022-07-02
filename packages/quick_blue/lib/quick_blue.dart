@@ -23,11 +23,12 @@ class QuickBlue {
   static Future<bool> isBluetoothAvailable() =>
       _platform.isBluetoothAvailable();
 
-  static void setAvailabilityHandler(OnAvailabilityChanged? onAvailabilityChanged) {
+  static Stream<AvailabilityState> get availabilityChangeStream {
     if (!Platform.isIOS && !Platform.isMacOS) {
       throw UnimplementedError('setAvailabilityHandler is only implemented on iOS and macOS');
     }
-    _platform.onAvailabilityChanged = onAvailabilityChanged;
+    return _platform.availabilityChangeStream
+        .map((availabilityStateValue) => AvailabilityState.parse(availabilityStateValue));
   }
 
   static Future<void> startScan() => _platform.startScan();

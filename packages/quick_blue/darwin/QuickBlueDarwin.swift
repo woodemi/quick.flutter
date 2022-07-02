@@ -54,11 +54,13 @@ public class QuickBlueDarwin: NSObject, FlutterPlugin {
     let messenger = registrar.messenger
     #endif
     let method = FlutterMethodChannel(name: "quick_blue/method", binaryMessenger: messenger)
+    let eventAvailabilityChange = FlutterEventChannel(name: "quick_blue/event.availabilityChange", binaryMessenger: messenger)
     let eventScanResult = FlutterEventChannel(name: "quick_blue/event.scanResult", binaryMessenger: messenger)
     let messageConnector = FlutterBasicMessageChannel(name: "quick_blue/message.connector", binaryMessenger: messenger)
 
     let instance = QuickBlueDarwin()
     registrar.addMethodCallDelegate(instance, channel: method)
+    eventAvailabilityChange.setStreamHandler(instance)
     eventScanResult.setStreamHandler(instance)
     instance.messageConnector = messageConnector
   }
@@ -66,6 +68,7 @@ public class QuickBlueDarwin: NSObject, FlutterPlugin {
   private lazy var manager: CBCentralManager = { CBCentralManager(delegate: self, queue: nil) }()
   private var discoveredPeripherals = Dictionary<String, CBPeripheral>()
 
+  private var availabilityChangeSink: FlutterEventSink?
   private var scanResultSink: FlutterEventSink?
   private var messageConnector: FlutterBasicMessageChannel!
 
@@ -177,9 +180,7 @@ public class QuickBlueDarwin: NSObject, FlutterPlugin {
 
 extension QuickBlueDarwin: CBCentralManagerDelegate {
   public func centralManagerDidUpdateState(_ central: CBCentralManager) {
-    messageConnector.sendMessage([
-      "AvailabilityState": central.state.rawValue,
-    ])
+    availabilityChangeSink?(central.state.rawValue)
   }
 
   public func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String: Any], rssi RSSI: NSNumber) {
@@ -218,7 +219,10 @@ extension QuickBlueDarwin: FlutterStreamHandler {
       return nil
     }
     print("QuickBlueDarwin onListenWithArguments: \(name)")
-    if name == "scanResult" {
+    if name == "availabilityChange" {
+      availabilityChangeSink = events
+      availabilityChangeSink?(manager.state.rawValue) // Initializes CBCentralManager and returns the current state when hot restarting
+    } else if name == "scanResult" {
       scanResultSink = events
     }
     return nil
@@ -229,7 +233,9 @@ extension QuickBlueDarwin: FlutterStreamHandler {
       return nil
     }
     print("QuickBlueDarwin onCancelWithArguments: \(name)")
-    if name == "scanResult" {
+    if name == "availabilityChange" {
+      availabilityChangeSink = nil
+    } else if name == "scanResult" {
       scanResultSink = nil
     }
     return nil

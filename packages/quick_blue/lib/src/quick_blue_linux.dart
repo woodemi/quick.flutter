@@ -57,6 +57,10 @@ class QuickBlueLinux extends QuickBluePlatform {
   }
 
   @override
+  // TODO: implement availabilityChangeStream
+  Stream<int> get availabilityChangeStream => throw UnimplementedError();
+
+  @override
   Future<void> startScan() async {
     await _ensureInitialized();
     _log('startScan invoke success');

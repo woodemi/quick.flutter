@@ -28,6 +28,26 @@ class AvailabilityState {
     }
     throw ArgumentError.value(value);
   }
+
+  @override
+  String toString() {
+    switch (this) {
+      case AvailabilityState.unknown:
+        return 'unknown';
+      case AvailabilityState.resetting:
+        return 'resetting';
+      case AvailabilityState.unsupported:
+        return 'unsupported';
+      case AvailabilityState.unauthorized:
+        return 'unauthorized';
+      case AvailabilityState.poweredOff:
+        return 'poweredOff';
+      case AvailabilityState.poweredOn:
+        return 'poweredOn';
+      default:
+        throw ArgumentError.value(value);
+    }
+  }
 }
 
 class BlueScanResult {
