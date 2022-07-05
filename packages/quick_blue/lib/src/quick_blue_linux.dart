@@ -25,7 +25,7 @@ class QuickBlueLinux extends QuickBluePlatform {
       await _client.connect();
 
       _activeAdapter ??= _client.adapters.firstWhereOrNull((adapter) => adapter.powered);
-      if (_activeAdapter == null && _client.adapters.isNotEmpty) {
+      if (_activeAdapter != null && _client.adapters.isNotEmpty) {
         await _client.adapters.first.setPowered(true);
         _activeAdapter = _client.adapters.first;
       } else {
