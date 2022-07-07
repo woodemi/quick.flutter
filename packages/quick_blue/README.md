@@ -12,7 +12,7 @@ A cross-platform (Android/iOS/macOS/Windows/Linux) BluetoothLE plugin for Flutte
 
 | API | Android | iOS | macOS | Windows | Linux |
 | :--- | :---: | :---: | :---: | :---: | :---: |
-| setAvailabilityHandler |  | ✔️ | ✔️ |  |  |
+| availabilityChangeStream |  | ✔️ | ✔️ |  |  |
 | isBluetoothAvailable | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ |
 | startScan/stopScan | ✔️ | ✔️ | ✔️ | ✔️ | ✔️ |
 | connect/disconnect | ✔️ | ✔️ | ✔️ | ✔️ |  |
@@ -28,11 +28,9 @@ A cross-platform (Android/iOS/macOS/Windows/Linux) BluetoothLE plugin for Flutte
 
 iOS/macOS
 ```dart
-QuickBlue.setAvailabilityHandler(_handleAvailabilityChange);
-
-void _handleAvailabilityChange(AvailabilityState state) {
-  debugPrint('_handleAvailabilityChange ${state.value}');
-}
+QuickBlue.availabilityChangeStream.listen((state) {
+  debugPrint('Bluetooth state: ${state.toString()}');
+});
 ```
 
 

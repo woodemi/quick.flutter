@@ -20,18 +20,21 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  StreamSubscription<BlueScanResult>? _subscription;
+  StreamSubscription<BlueScanResult>? _scanResultSubscription;
+  StreamSubscription<AvailabilityState>? _availabilitySubscription;
 
   @override
   void initState() {
     super.initState();
     if (Platform.isIOS || Platform.isMacOS) {
-      QuickBlue.setAvailabilityHandler(_handleAvailabilityChange);
+      QuickBlue.availabilityChangeStream.listen((state) {
+        debugPrint('Bluetooth state: ${state.toString()}');
+      });
     }
     if (kDebugMode) {
       QuickBlue.setLogger(Logger('quick_blue_example'));
     }
-    _subscription = QuickBlue.scanResultStream.listen((result) {
+    _scanResultSubscription = QuickBlue.scanResultStream.listen((result) {
       if (!_scanResults.any((r) => r.deviceId == result.deviceId)) {
         setState(() => _scanResults.add(result));
       }
@@ -41,7 +44,8 @@ class _MyAppState extends State<MyApp> {
   @override
   void dispose() {
     super.dispose();
-    _subscription?.cancel();
+    _scanResultSubscription?.cancel();
+    _availabilitySubscription?.cancel();
   }
 
   @override
@@ -53,11 +57,18 @@ class _MyAppState extends State<MyApp> {
         ),
         body: Column(
           children: [
+            if (Platform.isIOS || Platform.isMacOS)
+              StreamBuilder<AvailabilityState>(
+                stream: QuickBlue.availabilityChangeStream,
+                builder: (context, snapshot) {
+                  return Text('Bluetooth state: ${snapshot.data?.toString()}');
+                },
+              ),
             FutureBuilder(
               future: QuickBlue.isBluetoothAvailable(),
               builder: (context, snapshot) {
-                var available = snapshot.data?.toString() ?? '...';
-                return Text('Bluetooth init: $available');
+                var poweredOn = snapshot.data?.toString() ?? '...';
+                return Text('Bluetooth powered on: $poweredOn');
               },
             ),
             _buildButtons(),
@@ -103,8 +114,8 @@ class _MyAppState extends State<MyApp> {
             Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) =>
-                      PeripheralDetailPage(deviceId: _scanResults[index].deviceId),
+                  builder: (context) => PeripheralDetailPage(
+                      deviceId: _scanResults[index].deviceId),
                 ));
           },
         ),
@@ -122,9 +133,5 @@ class _MyAppState extends State<MyApp> {
       );
     }
     return Container();
-  }
-
-  void _handleAvailabilityChange(AvailabilityState state) {
-    debugPrint('_handleAvailabilityChange ${state.value}');
   }
 }

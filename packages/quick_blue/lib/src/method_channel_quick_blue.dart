@@ -9,6 +9,7 @@ import 'quick_blue_platform_interface.dart';
 class MethodChannelQuickBlue extends QuickBluePlatform {
   static const _method = MethodChannel('quick_blue/method');
   static const _eventScanResult = EventChannel('quick_blue/event.scanResult');
+  static const _eventAvailabilityChange = EventChannel('quick_blue/event.availabilityChange');
   static const _messageConnector = BasicMessageChannel('quick_blue/message.connector', StandardMessageCodec());
 
   MethodChannelQuickBlue() {
@@ -31,6 +32,11 @@ class MethodChannelQuickBlue extends QuickBluePlatform {
     bool result = await _method.invokeMethod('isBluetoothAvailable');
     return result;
   }
+
+  final Stream<int> _availabilityChangeStream = _eventAvailabilityChange.receiveBroadcastStream({'name': 'availabilityChange'}).cast();
+
+  @override
+  Stream<int> get availabilityChangeStream => _availabilityChangeStream;
 
   @override
   Future<void> startScan() async {
@@ -72,10 +78,7 @@ class MethodChannelQuickBlue extends QuickBluePlatform {
 
   Future<void> _handleConnectorMessage(dynamic message) async {
     _log('_handleConnectorMessage $message', logLevel: Level.ALL);
-    if (message['AvailabilityState'] != null) {
-      AvailabilityState availabilityState = AvailabilityState.parse(message['AvailabilityState']);
-      onAvailabilityChanged?.call(availabilityState);
-    } else if (message['ConnectionState'] != null) {
+    if (message['ConnectionState'] != null) {
       String deviceId = message['deviceId'];
       BlueConnectionState connectionState = BlueConnectionState.parse(message['ConnectionState']);
       onConnectionChanged?.call(deviceId, connectionState);

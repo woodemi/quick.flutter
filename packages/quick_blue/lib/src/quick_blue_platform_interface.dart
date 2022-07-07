@@ -9,8 +9,6 @@ import 'models.dart';
 export 'method_channel_quick_blue.dart';
 export 'models.dart';
 
-typedef OnAvailabilityChanged = void Function(AvailabilityState availabilityState);
-
 typedef QuickLogger = Logger;
 
 typedef OnConnectionChanged = void Function(String deviceId, BlueConnectionState state);
@@ -33,11 +31,11 @@ abstract class QuickBluePlatform extends PlatformInterface {
     _instance = instance;
   }
 
-  OnAvailabilityChanged? onAvailabilityChanged;
-
   void setLogger(QuickLogger logger);
 
   Future<bool> isBluetoothAvailable();
+
+  Stream<int> get availabilityChangeStream;
 
   Future<void> startScan();
 
