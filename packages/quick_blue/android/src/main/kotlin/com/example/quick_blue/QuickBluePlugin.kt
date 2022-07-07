@@ -17,6 +17,10 @@ import io.flutter.plugin.common.MethodChannel.Result
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.util.*
+import android.content.Intent
+import android.content.IntentFilter
+import android.content.BroadcastReceiver
+import android.bluetooth.BluetoothDevice.*
 
 private const val TAG = "QuickBluePlugin"
 
@@ -42,6 +46,7 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
     context = flutterPluginBinding.applicationContext
     mainThreadHandler = Handler(Looper.getMainLooper())
     bluetoothManager = flutterPluginBinding.applicationContext.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
+    listenToBondStateChanges(context)
   }
 
   override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
@@ -72,6 +77,15 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
       }
       "stopScan" -> {
         bluetoothManager.adapter.bluetoothLeScanner?.stopScan(scanCallback)
+        result.success(null)
+      }
+      "pair" -> {
+        val deviceId = call.argument<String>("deviceId")!!
+        val remoteDevice : BluetoothDevice = bluetoothManager.adapter.getRemoteDevice(deviceId)
+        var requiresPairing = remoteDevice.bondState == BOND_NONE
+        if(requiresPairing){
+          remoteDevice.createBond()
+        }
         result.success(null)
       }
       "connect" -> {
@@ -156,6 +170,35 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
       else -> {
         result.notImplemented()
       }
+    }
+  }
+
+  fun listenToBondStateChanges(context: Context) {
+    context.applicationContext.registerReceiver(
+      broadcastReceiver,
+      IntentFilter(ACTION_BOND_STATE_CHANGED)
+    )
+  }
+
+  private val broadcastReceiver = object : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+      with(intent) {
+        if (action == ACTION_BOND_STATE_CHANGED) {
+          val device = getParcelableExtra<BluetoothDevice>(EXTRA_DEVICE)
+          val previousBondState = getIntExtra(EXTRA_PREVIOUS_BOND_STATE, -1)
+          val bondState = getIntExtra(EXTRA_BOND_STATE, -1)
+          val bondTransition = "${previousBondState.toBondStateDescription()} to " +
+                  bondState.toBondStateDescription()
+          Log.v(TAG,  "${device?.address} Pair state changed | $bondTransition")
+        }
+      }
+    }
+
+    private fun Int.toBondStateDescription() = when(this) {
+      BOND_BONDED -> "Paired"
+      BOND_BONDING -> "Pairing"
+      BOND_NONE -> "Not Paired"
+      else -> "ERROR: $this"
     }
   }
 
