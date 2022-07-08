@@ -31,14 +31,14 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
   /// This local reference serves to register the plugin with the Flutter Engine and unregister it
   /// when the Flutter Engine is detached from the Activity
   private lateinit var method : MethodChannel
-  private lateinit var eventScanResult : EventChannel
   private lateinit var eventAvailabilityChange : EventChannel
+  private lateinit var eventScanResult : EventChannel
   private lateinit var messageConnector: BasicMessageChannel<Any>
 
   override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
     method = MethodChannel(flutterPluginBinding.binaryMessenger, "quick_blue/method")
-    eventScanResult = EventChannel(flutterPluginBinding.binaryMessenger, "quick_blue/event.scanResult")
     eventAvailabilityChange = EventChannel(flutterPluginBinding.binaryMessenger, "quick_blue/event.availabilityChange")
+    eventScanResult = EventChannel(flutterPluginBinding.binaryMessenger, "quick_blue/event.scanResult")
     messageConnector = BasicMessageChannel(flutterPluginBinding.binaryMessenger, "quick_blue/message.connector", StandardMessageCodec.INSTANCE)
     method.setMethodCallHandler(this)
     eventAvailabilityChange.setStreamHandler(this)
@@ -48,7 +48,7 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
     mainThreadHandler = Handler(Looper.getMainLooper())
     bluetoothManager = flutterPluginBinding.applicationContext.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
 
-    context.applicationContext.registerReceiver(
+    context.registerReceiver(
       broadcastReceiver,
       IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
     )
@@ -57,8 +57,9 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
   override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
     bluetoothManager.adapter.bluetoothLeScanner?.stopScan(scanCallback)
 
-    eventScanResult.setStreamHandler(null)
+    context.unregisterReceiver(broadcastReceiver)
     eventAvailabilityChange.setStreamHandler(null)
+    eventScanResult.setStreamHandler(null)
     method.setMethodCallHandler(null)
   }
 
@@ -175,10 +176,30 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
     gatt.disconnect()
   }
 
+  enum class AvailabilityState(val value: Int) {
+    unknown(0),
+    resetting(1),
+    unsupported(2),
+    unauthorized(3),
+    poweredOff(4),
+    poweredOn(5),
+  }
+
+  fun BluetoothManager.getAvailabilityState(): AvailabilityState {
+    val state = adapter?.state ?: return AvailabilityState.unsupported
+    return when(state) {
+      BluetoothAdapter.STATE_OFF -> AvailabilityState.poweredOff
+      BluetoothAdapter.STATE_ON -> AvailabilityState.poweredOn
+      BluetoothAdapter.STATE_TURNING_ON -> AvailabilityState.resetting
+      BluetoothAdapter.STATE_TURNING_OFF -> AvailabilityState.resetting
+      else -> AvailabilityState.unknown
+    }
+  }
+
   private val broadcastReceiver = object : BroadcastReceiver() {
-    override fun onReceive(context: Context?, intent: Intent?) {
+    override fun onReceive(context: Context, intent: Intent) {
         if (intent?.action == BluetoothAdapter.ACTION_STATE_CHANGED) {
-          availabilityChangeSink?.success(parseAvailabilityState())           
+          availabilityChangeSink?.success(bluetoothManager.getAvailabilityState().value)
         }
     }
   }
@@ -203,15 +224,15 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
     }
   }
 
-  private var scanResultSink: EventChannel.EventSink? = null
   private var availabilityChangeSink: EventChannel.EventSink? = null
+  private var scanResultSink: EventChannel.EventSink? = null
 
   override fun onListen(args: Any?, eventSink: EventChannel.EventSink?) {
     val map = args as? Map<String, Any> ?: return
     when (map["name"]) {
       "availabilityChange" -> {
         availabilityChangeSink = eventSink
-        availabilityChangeSink?.success(parseAvailabilityState())
+        availabilityChangeSink?.success(bluetoothManager.getAvailabilityState().value)
       }
       "scanResult" -> scanResultSink = eventSink
     }
@@ -223,25 +244,6 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
       "availabilityChange" -> availabilityChangeSink = null
       "scanResult" -> scanResultSink = null
     }
-  }
-
-  fun parseAvailabilityState(): Int {
-    //  unknown = 0
-    //  resetting = 1
-    //  unsupported = 2
-    //  unauthorized = 3
-    //  poweredOff = 4
-    //  poweredOn = 5
-    if(bluetoothManager.adapter == null){
-      return 2
-    }
-    when (bluetoothManager.adapter.state) {
-      BluetoothAdapter.STATE_OFF ->  return 4
-      BluetoothAdapter.STATE_ON  -> return 5
-      BluetoothAdapter.STATE_TURNING_ON ->  return 1
-      BluetoothAdapter.STATE_TURNING_OFF -> return 1
-    }
-    return  0
   }
 
   private val gattCallback = object : BluetoothGattCallback() {
