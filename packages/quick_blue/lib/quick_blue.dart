@@ -24,7 +24,7 @@ class QuickBlue {
       _platform.isBluetoothAvailable();
 
   static Stream<AvailabilityState> get availabilityChangeStream {
-    if (!Platform.isIOS && !Platform.isMacOS && !Platform.isAndroid && !Platform.isWindows) {
+    if (Platform.isLinux) {
       throw UnimplementedError('setAvailabilityHandler not implemented on this platform');
     }
     return _platform.availabilityChangeStream
