@@ -148,8 +148,7 @@ class QuickBluePlugin : public flutter::Plugin, public flutter::StreamHandler<En
 
   BluetoothLEAdvertisementWatcher bluetoothLEWatcher{ nullptr };
   winrt::event_token bluetoothLEWatcherReceivedToken;
-  void BluetoothLEWatcher_Received(BluetoothLEAdvertisementWatcher sender, BluetoothLEAdvertisementReceivedEventArgs args);
-  winrt::fire_and_forget SendScanResultAsync(BluetoothLEAdvertisementReceivedEventArgs args);
+  winrt::fire_and_forget BluetoothLEWatcher_Received(BluetoothLEAdvertisementWatcher sender, BluetoothLEAdvertisementReceivedEventArgs args);
 
   std::map<uint64_t, std::unique_ptr<BluetoothDeviceAgent>> connectedDevices{};
   void Radio_StateChanged(Radio& radio);
@@ -397,7 +396,7 @@ std::vector<uint8_t> parseManufacturerDataHead(BluetoothLEAdvertisement advertis
   return result;
 }
 
-void QuickBluePlugin::BluetoothLEWatcher_Received(
+winrt::fire_and_forget QuickBluePlugin::BluetoothLEWatcher_Received(
     BluetoothLEAdvertisementWatcher sender,
     BluetoothLEAdvertisementReceivedEventArgs args) {
   SendScanResultAsync(args);
@@ -416,7 +415,6 @@ void QuickBluePlugin::Radio_StateChanged(Radio& radio) {
       availability_change_sink_->Success(state);
     }
 }
-
 
 winrt::fire_and_forget QuickBluePlugin::SendScanResultAsync(BluetoothLEAdvertisementReceivedEventArgs args) {
   auto device = co_await BluetoothLEDevice::FromBluetoothAddressAsync(args.BluetoothAddress());
