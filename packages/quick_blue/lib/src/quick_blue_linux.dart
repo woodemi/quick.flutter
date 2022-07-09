@@ -173,7 +173,7 @@ class QuickBlueLinux extends QuickBluePlatform {
   @override
   Future<void> setNotifiable(String deviceId, String service, String characteristic, BleInputProperty bleInputProperty) async {
     var c = _getCharacteristic(deviceId, service, characteristic);
-
+    
     if (bleInputProperty != BleInputProperty.disabled) {
       c.startNotify();
       void onPropertiesChanged(properties) {
