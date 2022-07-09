@@ -22,7 +22,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   StreamSubscription<BlueScanResult>? _scanResultSubscription;
   StreamSubscription<AvailabilityState>? _availabilitySubscription;
-  bool isAvailabilityChangeStreamSupported = !Platform.isLinux;
+  bool isAvailabilityChangeStreamSupported = Platform.isIOS || Platform.isMacOS || Platform.isAndroid || Platform.isWindows;
 
   @override
   void initState() {
