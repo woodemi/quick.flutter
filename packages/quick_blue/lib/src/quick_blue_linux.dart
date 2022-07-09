@@ -15,6 +15,8 @@ class QuickBlueLinux extends QuickBluePlatform {
   }
 
   bool isInitialized = false;
+  AvailabilityState _oldAvailabilityState = AvailabilityState.unknown;
+  StreamSubscription? _availabilityStreamSubscription;
 
   final BlueZClient _client = BlueZClient();
 
@@ -32,6 +34,18 @@ class QuickBlueLinux extends QuickBluePlatform {
         throw Exception('Bluetooth adapter unavailable');
       }
       _client.deviceAdded.listen(_onDeviceAdd);
+
+      _availabilityStateController.onListen = () {
+        _availabilityStreamSubscription = _activeAdapter?.propertiesChanged.listen((event) {
+          if(_oldAvailabilityState == _getAvailabilityState)return;
+          _oldAvailabilityState = _getAvailabilityState;
+          _availabilityStateController.add(_getAvailabilityState);
+        });
+      };
+      
+      _availabilityStateController.onCancel = () {
+        _availabilityStreamSubscription?.cancel();
+      };
 
       isInitialized = true;
     }
@@ -56,9 +70,18 @@ class QuickBlueLinux extends QuickBluePlatform {
     return _activeAdapter != null;
   }
 
+  // FIXME Close
+  final StreamController<AvailabilityState> _availabilityStateController = StreamController.broadcast();
+
   @override
-  // TODO: implement availabilityChangeStream
-  Stream<int> get availabilityChangeStream => throw UnimplementedError();
+  Stream<int> get availabilityChangeStream =>_availabilityStateController.stream.map((state) => state.value);
+
+  AvailabilityState get _getAvailabilityState {
+    if (_activeAdapter == null) return AvailabilityState.unsupported;
+    return _activeAdapter!.powered
+        ? AvailabilityState.poweredOn
+        : AvailabilityState.poweredOff;
+  }
 
   @override
   Future<void> startScan() async {
@@ -149,7 +172,7 @@ class QuickBlueLinux extends QuickBluePlatform {
   @override
   Future<void> setNotifiable(String deviceId, String service, String characteristic, BleInputProperty bleInputProperty) async {
     var c = _getCharacteristic(deviceId, service, characteristic);
-    
+
     if (bleInputProperty != BleInputProperty.disabled) {
       c.startNotify();
       void onPropertiesChanged(properties) {
