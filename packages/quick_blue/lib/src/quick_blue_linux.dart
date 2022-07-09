@@ -25,11 +25,12 @@ class QuickBlueLinux extends QuickBluePlatform {
       await _client.connect();
 
       _activeAdapter ??= _client.adapters.firstWhereOrNull((adapter) => adapter.powered);
-      if (_activeAdapter == null && _client.adapters.isNotEmpty) {
-        await _client.adapters.first.setPowered(true);
-        _activeAdapter = _client.adapters.first;
-      } else {
-        throw Exception('Bluetooth adapter unavailable');
+      if (_activeAdapter == null) {
+          if (_client.adapters.isEmpty) {
+             throw Exception('Bluetooth adapter unavailable');
+          }
+          await _client.adapters.first.setPowered(true);
+          _activeAdapter = _client.adapters.first;
       }
       _client.deviceAdded.listen(_onDeviceAdd);
 
