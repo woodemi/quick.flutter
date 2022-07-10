@@ -140,15 +140,19 @@ class QuickBluePlugin : public flutter::Plugin, public flutter::StreamHandler<En
 
   std::unique_ptr<flutter::BasicMessageChannel<EncodableValue>> message_connector_;
 
+  std::unique_ptr<flutter::EventSink<EncodableValue>> availability_change_sink_;
   std::unique_ptr<flutter::EventSink<EncodableValue>> scan_result_sink_;
 
   Radio bluetoothRadio{ nullptr };
+  void Radio_StateChanged(Radio sender, IInspectable args);
+  RadioState oldRadioState = RadioState::Unknown;
 
   BluetoothLEAdvertisementWatcher bluetoothLEWatcher{ nullptr };
   winrt::event_token bluetoothLEWatcherReceivedToken;
   winrt::fire_and_forget BluetoothLEWatcher_Received(BluetoothLEAdvertisementWatcher sender, BluetoothLEAdvertisementReceivedEventArgs args);
 
   std::map<uint64_t, std::unique_ptr<BluetoothDeviceAgent>> connectedDevices{};
+  winrt::event_revoker<IRadio> radioStateChangedRevoker;
 
   winrt::fire_and_forget ConnectAsync(uint64_t bluetoothAddress);
   void BluetoothLEDevice_ConnectionStatusChanged(BluetoothLEDevice sender, IInspectable args);
@@ -169,6 +173,10 @@ void QuickBluePlugin::RegisterWithRegistrar(
       std::make_unique<flutter::MethodChannel<EncodableValue>>(
           registrar->messenger(), "quick_blue/method",
           &flutter::StandardMethodCodec::GetInstance());
+  auto event_availability_change =
+      std::make_unique<flutter::EventChannel<EncodableValue>>(
+          registrar->messenger(), "quick_blue/event.availabilityChange",
+          &flutter::StandardMethodCodec::GetInstance());        
   auto event_scan_result =
       std::make_unique<flutter::EventChannel<EncodableValue>>(
           registrar->messenger(), "quick_blue/event.scanResult",
@@ -185,7 +193,7 @@ void QuickBluePlugin::RegisterWithRegistrar(
         plugin_pointer->HandleMethodCall(call, std::move(result));
       });
 
-  auto handler = std::make_unique<
+  auto availability_handler = std::make_unique<
       flutter::StreamHandlerFunctions<>>(
       [plugin_pointer = plugin.get()](
           const EncodableValue* arguments,
@@ -196,9 +204,21 @@ void QuickBluePlugin::RegisterWithRegistrar(
       [plugin_pointer = plugin.get()](const EncodableValue* arguments)
           -> std::unique_ptr<flutter::StreamHandlerError<>> {
         return plugin_pointer->OnCancel(arguments);
-      });
-  event_scan_result->SetStreamHandler(std::move(handler));
-
+      });    
+  auto scan_result_handler = std::make_unique<
+      flutter::StreamHandlerFunctions<>>(
+      [plugin_pointer = plugin.get()](
+          const EncodableValue* arguments,
+          std::unique_ptr<flutter::EventSink<>>&& events)
+          -> std::unique_ptr<flutter::StreamHandlerError<>> {
+        return plugin_pointer->OnListen(arguments, std::move(events));
+      },
+      [plugin_pointer = plugin.get()](const EncodableValue* arguments)
+          -> std::unique_ptr<flutter::StreamHandlerError<>> {
+        return plugin_pointer->OnCancel(arguments);
+      });    
+  event_availability_change->SetStreamHandler(std::move(availability_handler));    
+  event_scan_result->SetStreamHandler(std::move(scan_result_handler));
   plugin->message_connector_ = std::move(message_connector_);
 
   registrar->AddPlugin(std::move(plugin));
@@ -213,6 +233,9 @@ QuickBluePlugin::~QuickBluePlugin() {}
 winrt::fire_and_forget QuickBluePlugin::InitializeAsync() {
   auto bluetoothAdapter = co_await BluetoothAdapter::GetDefaultAsync();
   bluetoothRadio = co_await bluetoothAdapter.GetRadioAsync();
+  if (bluetoothRadio) {
+    radioStateChangedRevoker = bluetoothRadio.StateChanged(winrt::auto_revoke, { this, &QuickBluePlugin::Radio_StateChanged });
+  }
 }
 
 void QuickBluePlugin::HandleMethodCall(
@@ -372,6 +395,42 @@ std::vector<uint8_t> parseManufacturerDataHead(BluetoothLEAdvertisement advertis
   return result;
 }
 
+enum class AvailabilityState : int {
+  unknown = 0,
+  resetting = 1,
+  unsupported = 2,
+  unauthorized = 3,
+  poweredOff = 4,
+  poweredOn = 5,
+};
+
+void QuickBluePlugin::Radio_StateChanged(Radio radio, IInspectable args) {
+  auto radioState = radio ? RadioState::Disabled : radio.State();
+  // FIXME https://stackoverflow.com/questions/66099947/bluetooth-radio-statechanged-event-fires-twice/67723902#67723902
+  if (oldRadioState == radioState) {
+    return;
+  }
+  oldRadioState = radioState;
+
+  auto state = [=]() -> AvailabilityState {
+    if (radioState == RadioState::Unknown) {
+      return AvailabilityState::unknown;
+    } else if (radioState == RadioState::Off) {
+      return AvailabilityState::poweredOff;
+    } else if (radioState == RadioState::On) {
+      return AvailabilityState::poweredOn;
+    } else if (radioState == RadioState::Disabled) {
+      return AvailabilityState::unsupported;
+    } else {
+      return AvailabilityState::unknown;
+    }
+  }();
+
+  if (availability_change_sink_) {
+    availability_change_sink_->Success(static_cast<int>(state));
+  }
+}
+
 winrt::fire_and_forget QuickBluePlugin::BluetoothLEWatcher_Received(
     BluetoothLEAdvertisementWatcher sender,
     BluetoothLEAdvertisementReceivedEventArgs args) {
@@ -397,7 +456,10 @@ std::unique_ptr<flutter::StreamHandlerError<EncodableValue>> QuickBluePlugin::On
   }
   auto args = std::get<EncodableMap>(*arguments);
   auto name = std::get<std::string>(args[EncodableValue("name")]);
-  if (name.compare("scanResult") == 0) {
+  if (name.compare("availabilityChange") == 0) {
+    availability_change_sink_ = std::move(events);
+    Radio_StateChanged(bluetoothRadio, nullptr);
+  } else if (name.compare("scanResult") == 0) {
     scan_result_sink_ = std::move(events);
   }
   return nullptr;
@@ -411,7 +473,9 @@ std::unique_ptr<flutter::StreamHandlerError<EncodableValue>> QuickBluePlugin::On
   }
   auto args = std::get<EncodableMap>(*arguments);
   auto name = std::get<std::string>(args[EncodableValue("name")]);
-  if (name.compare("scanResult") == 0) {
+  if (name.compare("availabilityChange") == 0) {
+    availability_change_sink_ = nullptr;
+  } else if (name.compare("scanResult") == 0) {
       scan_result_sink_ = nullptr;
   }
   return nullptr;
