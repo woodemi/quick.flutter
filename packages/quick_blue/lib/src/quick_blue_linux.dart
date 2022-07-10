@@ -165,7 +165,7 @@ class QuickBlueLinux extends QuickBluePlatform {
     return c;
   }
 
-  final Map<String, StreamSubscription<List<String>>> _characteristicPropertiesSubcriptions = {};
+  final Map<String, StreamSubscription<List<String>>> _characteristicPropertiesSubscriptions = {};
 
   @override
   Future<void> setNotifiable(String deviceId, String service, String characteristic, BleInputProperty bleInputProperty) async {
@@ -179,10 +179,10 @@ class QuickBlueLinux extends QuickBluePlatform {
           onValueChanged?.call(deviceId, characteristic, Uint8List.fromList(c.value));
         }
       }
-      _characteristicPropertiesSubcriptions[characteristic] ??= c.propertiesChanged.listen(onPropertiesChanged);
+      _characteristicPropertiesSubscriptions[characteristic] ??= c.propertiesChanged.listen(onPropertiesChanged);
     } else {
       c.stopNotify();
-      _characteristicPropertiesSubcriptions.remove(characteristic)?.cancel();
+      _characteristicPropertiesSubscriptions.remove(characteristic)?.cancel();
     }
   }
 
