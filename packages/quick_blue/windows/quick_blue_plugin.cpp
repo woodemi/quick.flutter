@@ -412,7 +412,7 @@ void QuickBluePlugin::Radio_StateChanged(Radio radio, IInspectable args) {
   }
   oldRadioState = radioState;
 
-  auto state = []() -> AvailabilityState {
+  auto state = [=]() -> AvailabilityState {
     if (radioState == RadioState::Unknown) {
       return AvailabilityState::unknown;
     } else if (radioState == RadioState::Off) {
