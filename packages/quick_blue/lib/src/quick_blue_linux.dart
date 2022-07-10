@@ -15,8 +15,7 @@ class QuickBlueLinux extends QuickBluePlatform {
   }
 
   bool isInitialized = false;
-  AvailabilityState _oldAvailabilityState = AvailabilityState.unknown;
-  StreamSubscription? _availabilityStreamSubscription;
+  AvailabilityState _oldState = AvailabilityState.unknown;
 
   final BlueZClient _client = BlueZClient();
 
@@ -36,18 +35,12 @@ class QuickBlueLinux extends QuickBluePlatform {
       }
       _client.deviceAdded.listen(_onDeviceAdd);
 
-      _availabilityStateController.onListen = () {
-        _availabilityStreamSubscription = _activeAdapter?.propertiesChanged.listen((event) {
-          if(_oldAvailabilityState == _getAvailabilityState)return;
-          _oldAvailabilityState = _getAvailabilityState;
-          _availabilityStateController.add(_getAvailabilityState);
-        });
-      };
-      
-      _availabilityStateController.onCancel = () {
-        _availabilityStreamSubscription?.cancel();
-      };
-
+      _activeAdapter?.propertiesChanged.listen((event) {
+        if (_oldState == _getAvailabilityState) return;
+        _oldState = _getAvailabilityState;
+        _availabilityStateController.add(_getAvailabilityState);
+      });
+      _availabilityStateController.add(_getAvailabilityState);
       isInitialized = true;
     }
   }
@@ -68,7 +61,11 @@ class QuickBlueLinux extends QuickBluePlatform {
     await _ensureInitialized();
     _log('isBluetoothAvailable invoke success');
 
-    return _activeAdapter != null;
+    if (_activeAdapter == null) {
+      return false;
+    } else {
+      return _activeAdapter!.powered;
+    }
   }
 
   // FIXME Close
