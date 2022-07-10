@@ -427,7 +427,7 @@ void QuickBluePlugin::Radio_StateChanged(Radio radio, IInspectable args) {
   }();
 
   if (availability_change_sink_) {
-    availability_change_sink_->Success(state);
+    availability_change_sink_->Success(static_cast<int>(state));
   }
 }
 
