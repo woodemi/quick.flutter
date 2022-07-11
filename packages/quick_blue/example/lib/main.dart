@@ -22,16 +22,15 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   StreamSubscription<BlueScanResult>? _scanResultSubscription;
   StreamSubscription<AvailabilityState>? _availabilitySubscription;
-  bool isAvailabilityChangeStreamSupported = !Platform.isLinux;
 
   @override
   void initState() {
     super.initState();
-    if (isAvailabilityChangeStreamSupported) {
-      QuickBlue.availabilityChangeStream.listen((state) {
-        debugPrint('Bluetooth state: ${state.toString()}');
-      });
-    }
+
+    QuickBlue.availabilityChangeStream.listen((state) {
+      debugPrint('Bluetooth state: ${state.toString()}');
+    });
+
     if (kDebugMode) {
       QuickBlue.setLogger(Logger('quick_blue_example'));
     }
@@ -58,13 +57,12 @@ class _MyAppState extends State<MyApp> {
         ),
         body: Column(
           children: [
-            if (isAvailabilityChangeStreamSupported)
-              StreamBuilder<AvailabilityState>(
-                stream: QuickBlue.availabilityChangeStream,
-                builder: (context, snapshot) {
-                  return Text('Bluetooth state: ${snapshot.data?.toString()}');
-                },
-              ),
+            StreamBuilder<AvailabilityState>(
+              stream: QuickBlue.availabilityChangeStream,
+              builder: (context, snapshot) {
+                return Text('Bluetooth state: ${snapshot.data?.toString()}');
+              },
+            ),
             FutureBuilder(
               future: QuickBlue.isBluetoothAvailable(),
               builder: (context, snapshot) {

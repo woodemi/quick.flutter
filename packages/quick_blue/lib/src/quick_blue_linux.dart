@@ -34,6 +34,12 @@ class QuickBlueLinux extends QuickBluePlatform {
       }
       _client.deviceAdded.listen(_onDeviceAdd);
 
+      _activeAdapter?.propertiesChanged.listen((List<String> properties) {
+        if (properties.contains('Powered')) {
+          _availabilityStateController.add(availabilityState);
+        }
+      });
+      _availabilityStateController.add(availabilityState);
       isInitialized = true;
     }
   }
@@ -53,13 +59,18 @@ class QuickBlueLinux extends QuickBluePlatform {
   Future<bool> isBluetoothAvailable() async {
     await _ensureInitialized();
     _log('isBluetoothAvailable invoke success');
-
-    return _activeAdapter != null;
+    return _activeAdapter!.powered;
   }
 
+  // FIXME Close
+  final StreamController<AvailabilityState> _availabilityStateController = StreamController.broadcast();
+
   @override
-  // TODO: implement availabilityChangeStream
-  Stream<int> get availabilityChangeStream => throw UnimplementedError();
+  Stream<int> get availabilityChangeStream =>_availabilityStateController.stream.map((state) => state.value);
+
+  AvailabilityState get availabilityState {
+    return _activeAdapter!.powered ? AvailabilityState.poweredOn : AvailabilityState.poweredOff;
+  }
 
   @override
   Future<void> startScan() async {
@@ -145,7 +156,7 @@ class QuickBlueLinux extends QuickBluePlatform {
     return c;
   }
 
-  final Map<String, StreamSubscription<List<String>>> _characteristicPropertiesSubcriptions = {};
+  final Map<String, StreamSubscription<List<String>>> _characteristicPropertiesSubscriptions = {};
 
   @override
   Future<void> setNotifiable(String deviceId, String service, String characteristic, BleInputProperty bleInputProperty) async {
@@ -159,10 +170,10 @@ class QuickBlueLinux extends QuickBluePlatform {
           onValueChanged?.call(deviceId, characteristic, Uint8List.fromList(c.value));
         }
       }
-      _characteristicPropertiesSubcriptions[characteristic] ??= c.propertiesChanged.listen(onPropertiesChanged);
+      _characteristicPropertiesSubscriptions[characteristic] ??= c.propertiesChanged.listen(onPropertiesChanged);
     } else {
       c.stopNotify();
-      _characteristicPropertiesSubcriptions.remove(characteristic)?.cancel();
+      _characteristicPropertiesSubscriptions.remove(characteristic)?.cancel();
     }
   }
 
