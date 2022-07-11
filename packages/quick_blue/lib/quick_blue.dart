@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'src/quick_blue_platform_interface.dart';
@@ -23,7 +22,7 @@ class QuickBlue {
   static Future<bool> isBluetoothAvailable() =>
       _platform.isBluetoothAvailable();
 
-  static Stream<AvailabilityState> get availabilityChangeStream =>_platform.availabilityChangeStream.map((availabilityStateValue) => AvailabilityState.parse(availabilityStateValue));
+  static Stream<AvailabilityState> get availabilityChangeStream => _platform.availabilityChangeStream.map(AvailabilityState.parse);
 
   static Future<void> startScan() => _platform.startScan();
 

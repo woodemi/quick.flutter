@@ -15,7 +15,6 @@ class QuickBlueLinux extends QuickBluePlatform {
   }
 
   bool isInitialized = false;
-  AvailabilityState _oldState = AvailabilityState.unknown;
 
   final BlueZClient _client = BlueZClient();
 
@@ -25,22 +24,23 @@ class QuickBlueLinux extends QuickBluePlatform {
     if (!isInitialized) {
       await _client.connect();
 
-      _activeAdapter ??= _client.adapters.firstWhereOrNull((adapter) => adapter.powered);
+      _activeAdapter ??=
+          _client.adapters.firstWhereOrNull((adapter) => adapter.powered);
       if (_activeAdapter == null) {
-          if (_client.adapters.isEmpty) {
-             throw Exception('Bluetooth adapter unavailable');
-          }
-          await _client.adapters.first.setPowered(true);
-          _activeAdapter = _client.adapters.first;
+        if (_client.adapters.isEmpty) {
+          throw Exception('Bluetooth adapter unavailable');
+        }
+        await _client.adapters.first.setPowered(true);
+        _activeAdapter = _client.adapters.first;
       }
       _client.deviceAdded.listen(_onDeviceAdd);
 
-      _activeAdapter?.propertiesChanged.listen((event) {
-        if (_oldState == _getAvailabilityState) return;
-        _oldState = _getAvailabilityState;
-        _availabilityStateController.add(_getAvailabilityState);
+      _activeAdapter?.propertiesChanged.listen((List<String> properties) {
+        if (properties.contains('Powered')) {
+          _availabilityStateController.add(availabilityState);
+        }
       });
-      _availabilityStateController.add(_getAvailabilityState);
+      _availabilityStateController.add(availabilityState);
       isInitialized = true;
     }
   }
@@ -60,22 +60,18 @@ class QuickBlueLinux extends QuickBluePlatform {
   Future<bool> isBluetoothAvailable() async {
     await _ensureInitialized();
     _log('isBluetoothAvailable invoke success');
-
-    if (_activeAdapter == null) {
-      return false;
-    } else {
-      return _activeAdapter!.powered;
-    }
+    return _activeAdapter!.powered;
   }
 
   // FIXME Close
-  final StreamController<AvailabilityState> _availabilityStateController = StreamController.broadcast();
+  final StreamController<AvailabilityState> _availabilityStateController =
+      StreamController.broadcast();
 
   @override
-  Stream<int> get availabilityChangeStream =>_availabilityStateController.stream.map((state) => state.value);
+  Stream<int> get availabilityChangeStream =>
+      _availabilityStateController.stream.map((state) => state.value);
 
-  AvailabilityState get _getAvailabilityState {
-    if (_activeAdapter == null) return AvailabilityState.unsupported;
+  AvailabilityState get availabilityState {
     return _activeAdapter!.powered
         ? AvailabilityState.poweredOn
         : AvailabilityState.poweredOff;
@@ -103,7 +99,8 @@ class QuickBlueLinux extends QuickBluePlatform {
   }
 
   // FIXME Close
-  final StreamController<dynamic> _scanResultController = StreamController.broadcast();
+  final StreamController<dynamic> _scanResultController =
+      StreamController.broadcast();
 
   @override
   Stream get scanResultStream => _scanResultController.stream;
@@ -118,7 +115,8 @@ class QuickBlueLinux extends QuickBluePlatform {
   }
 
   BlueZDevice _findDeviceById(String deviceId) {
-    var device = _client.devices.firstWhereOrNull((device) => device.address == deviceId);
+    var device = _client.devices
+        .firstWhereOrNull((device) => device.address == deviceId);
     if (device == null) {
       throw Exception('Unknown deviceId:$deviceId');
     }
@@ -149,15 +147,20 @@ class QuickBlueLinux extends QuickBluePlatform {
         _log("    Characteristic ${characteristic.uuid}");
       }
 
-      var characteristics = service.characteristics.map((e) => e.uuid.toString()).toList();
-      onServiceDiscovered?.call(deviceId, service.uuid.toString(), characteristics);
+      var characteristics =
+          service.characteristics.map((e) => e.uuid.toString()).toList();
+      onServiceDiscovered?.call(
+          deviceId, service.uuid.toString(), characteristics);
     }
   }
 
-  BlueZGattCharacteristic _getCharacteristic(String deviceId, String service, String characteristic) {
+  BlueZGattCharacteristic _getCharacteristic(
+      String deviceId, String service, String characteristic) {
     var device = _findDeviceById(deviceId);
-    var s = device.gattServices.firstWhereOrNull((s) => s.uuid.toString() == service);
-    var c = s?.characteristics.firstWhereOrNull((c) => c.uuid.toString() == characteristic);
+    var s = device.gattServices
+        .firstWhereOrNull((s) => s.uuid.toString() == service);
+    var c = s?.characteristics
+        .firstWhereOrNull((c) => c.uuid.toString() == characteristic);
 
     if (c == null) {
       throw Exception('Unknown characteristic:$characteristic');
@@ -165,21 +168,27 @@ class QuickBlueLinux extends QuickBluePlatform {
     return c;
   }
 
-  final Map<String, StreamSubscription<List<String>>> _characteristicPropertiesSubscriptions = {};
+  final Map<String, StreamSubscription<List<String>>>
+      _characteristicPropertiesSubscriptions = {};
 
   @override
-  Future<void> setNotifiable(String deviceId, String service, String characteristic, BleInputProperty bleInputProperty) async {
+  Future<void> setNotifiable(String deviceId, String service,
+      String characteristic, BleInputProperty bleInputProperty) async {
     var c = _getCharacteristic(deviceId, service, characteristic);
-    
+
     if (bleInputProperty != BleInputProperty.disabled) {
       c.startNotify();
       void onPropertiesChanged(properties) {
         if (properties.contains('Value')) {
-          _log('onCharacteristicPropertiesChanged $characteristic, ${hex.encode(c.value)}');
-          onValueChanged?.call(deviceId, characteristic, Uint8List.fromList(c.value));
+          _log(
+              'onCharacteristicPropertiesChanged $characteristic, ${hex.encode(c.value)}');
+          onValueChanged?.call(
+              deviceId, characteristic, Uint8List.fromList(c.value));
         }
       }
-      _characteristicPropertiesSubscriptions[characteristic] ??= c.propertiesChanged.listen(onPropertiesChanged);
+
+      _characteristicPropertiesSubscriptions[characteristic] ??=
+          c.propertiesChanged.listen(onPropertiesChanged);
     } else {
       c.stopNotify();
       _characteristicPropertiesSubscriptions.remove(characteristic)?.cancel();
@@ -187,7 +196,8 @@ class QuickBlueLinux extends QuickBluePlatform {
   }
 
   @override
-  Future<void> readValue(String deviceId, String service, String characteristic) async {
+  Future<void> readValue(
+      String deviceId, String service, String characteristic) async {
     var c = _getCharacteristic(deviceId, service, characteristic);
 
     var data = await c.readValue();
@@ -196,7 +206,12 @@ class QuickBlueLinux extends QuickBluePlatform {
   }
 
   @override
-  Future<void> writeValue(String deviceId, String service, String characteristic, Uint8List value, BleOutputProperty bleOutputProperty) async {
+  Future<void> writeValue(
+      String deviceId,
+      String service,
+      String characteristic,
+      Uint8List value,
+      BleOutputProperty bleOutputProperty) async {
     var c = _getCharacteristic(deviceId, service, characteristic);
 
     if (bleOutputProperty == BleOutputProperty.withResponse) {
