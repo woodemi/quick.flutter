@@ -38,6 +38,8 @@ flutter:
         pluginClass: QuickWlanPlugin
       ios:
         pluginClass: QuickWlanPlugin
+      windows:
+        pluginClass: QuickWlanPlugin
       macos:
         pluginClass: QuickWlanPlugin
     # -------------------
