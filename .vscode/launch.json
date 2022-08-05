@@ -45,6 +45,26 @@
             "flutterMode": "release"
         },
         {
+            "name": "quick_hid/debug",
+            "cwd": "packages/quick_hid/example",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "quick_hid/profile",
+            "cwd": "packages/quick_hid/example",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "quick_hid/release",
+            "cwd": "packages/quick_hid/example",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
+        {
             "name": "quick_scan/debug",
             "cwd": "packages/quick_scan/example",
             "request": "launch",
