@@ -38,6 +38,8 @@ flutter:
         pluginClass: QuickWlanPlugin
       ios:
         pluginClass: QuickWlanPlugin
+      macos:
+        pluginClass: QuickWlanPlugin
     # -------------------
 
   # To add assets to your plugin package, add an assets section, like this:
