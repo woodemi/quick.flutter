@@ -37,6 +37,8 @@ flutter:
         pluginClass: QuickHidPlugin
       macos:
         pluginClass: QuickHidPlugin
+      linux:
+        pluginClass: QuickHidPlugin
     # -------------------
 
   # To add assets to your plugin package, add an assets section, like this:
