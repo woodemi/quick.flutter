@@ -65,6 +65,26 @@
             "flutterMode": "release"
         },
         {
+            "name": "quick_wlan/debug",
+            "cwd": "packages/quick_wlan/example",
+            "request": "launch",
+            "type": "dart"
+        },
+        {
+            "name": "quick_wlan/profile",
+            "cwd": "packages/quick_wlan/example",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "profile"
+        },
+        {
+            "name": "quick_wlan/release",
+            "cwd": "packages/quick_wlan/example",
+            "request": "launch",
+            "type": "dart",
+            "flutterMode": "release"
+        },
+        {
             "name": "quick_scan/debug",
             "cwd": "packages/quick_scan/example",
             "request": "launch",
