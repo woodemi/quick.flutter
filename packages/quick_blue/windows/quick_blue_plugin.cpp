@@ -405,7 +405,7 @@ enum class AvailabilityState : int {
 };
 
 void QuickBluePlugin::Radio_StateChanged(Radio radio, IInspectable args) {
-  auto radioState = radio ? RadioState::Disabled : radio.State();
+  auto radioState = !radio ? RadioState::Disabled : radio.State();
   // FIXME https://stackoverflow.com/questions/66099947/bluetooth-radio-statechanged-event-fires-twice/67723902#67723902
   if (oldRadioState == radioState) {
     return;
