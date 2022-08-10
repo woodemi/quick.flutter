@@ -40,6 +40,7 @@ class _PeripheralDetailPageState extends State<PeripheralDetailPage> {
     QuickBlue.setConnectionHandler(_handleConnectionChange);
     QuickBlue.setServiceHandler(_handleServiceDiscovery);
     QuickBlue.setValueHandler(_handleValueChange);
+    QuickBlue.setWriteValueHandler(_handlerWriteValue);
   }
 
   @override
@@ -48,10 +49,15 @@ class _PeripheralDetailPageState extends State<PeripheralDetailPage> {
     QuickBlue.setValueHandler(null);
     QuickBlue.setServiceHandler(null);
     QuickBlue.setConnectionHandler(null);
+    QuickBlue.setWriteValueHandler(null);
   }
 
-  void _handleConnectionChange(String deviceId, BlueConnectionState state) {
-    debugPrint('_handleConnectionChange $deviceId, $state');
+  void _handlerWriteValue(String deviceId, String characteristicId, String? error) {
+    debugPrint('_handlerWriteValue $deviceId, State : $characteristicId ,Error : $error');
+  }
+
+  void _handleConnectionChange(String deviceId, BlueConnectionState state,String? error) {
+    debugPrint('_handleConnectionChange $deviceId,State : ${state.value} , Error : $error');
   }
 
   void _handleServiceDiscovery(String deviceId, String serviceId, List<String> characteristicIds) {

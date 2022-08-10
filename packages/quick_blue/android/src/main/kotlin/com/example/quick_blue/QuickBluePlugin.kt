@@ -255,10 +255,12 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
           "ConnectionState" to "connected"
         ))
       } else {
+        // TODO Parse status code and send correct error messages
         cleanConnection(gatt)
         sendMessage(messageConnector, mapOf(
           "deviceId" to gatt.device.address,
-          "ConnectionState" to "disconnected"
+          "ConnectionState" to "disconnected",
+          "error" to "Disconnection Reason : Status $status"
         ))
       }
     }
@@ -306,6 +308,13 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
 
     override fun onCharacteristicWrite(gatt: BluetoothGatt?, characteristic: BluetoothGattCharacteristic, status: Int) {
       Log.v(TAG, "onCharacteristicWrite ${characteristic.uuid}, ${characteristic.value.contentToString()} $status")
+      val deviceID = gatt?.device?.address ?: ""
+      // TODO Parse status code and send correct error messages
+      sendMessage(messageConnector, mapOf(
+        "deviceId" to deviceID,
+        "characteristic" to characteristic.uuid.toString(),
+        "error" to "Write Command Status : $status"
+      ))
     }
 
     override fun onCharacteristicChanged(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {

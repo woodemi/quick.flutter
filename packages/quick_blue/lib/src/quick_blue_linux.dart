@@ -119,19 +119,24 @@ class QuickBlueLinux extends QuickBluePlatform {
   @override
   void connect(String deviceId) {
     _findDeviceById(deviceId).connect().then((_) {
-      onConnectionChanged?.call(deviceId, BlueConnectionState.connected);
+      onConnectionChanged?.call(deviceId, BlueConnectionState.connected,null);
     });
+    //TODO :  Listen for PropertisChanged event , to update Connection Status on Disconnection from BleDevice , 
+
+    // _findDeviceById(deviceId).propertiesChanged.listen((event) {
+    //     print(event);
+    // });
   }
 
   @override
   void disconnect(String deviceId) {
     _findDeviceById(deviceId).disconnect().then((_) {
-      onConnectionChanged?.call(deviceId, BlueConnectionState.disconnected);
+      onConnectionChanged?.call(deviceId, BlueConnectionState.disconnected,null);
     });
   }
 
   @override
-  void discoverServices(String deviceId) {
+  Future<void> discoverServices(String deviceId) async{
     var device = _findDeviceById(deviceId);
 
     for (var service in device.gattServices) {
@@ -189,13 +194,17 @@ class QuickBlueLinux extends QuickBluePlatform {
   @override
   Future<void> writeValue(String deviceId, String service, String characteristic, Uint8List value, BleOutputProperty bleOutputProperty) async {
     var c = _getCharacteristic(deviceId, service, characteristic);
-
-    if (bleOutputProperty == BleOutputProperty.withResponse) {
-      await c.writeValue(value, type: BlueZGattCharacteristicWriteType.request);
-    } else {
-      await c.writeValue(value, type: BlueZGattCharacteristicWriteType.command);
+    try{
+      if (bleOutputProperty == BleOutputProperty.withResponse) {
+        await c.writeValue(value, type: BlueZGattCharacteristicWriteType.request);
+      } else {
+        await c.writeValue(value, type: BlueZGattCharacteristicWriteType.command);
+      }
+      _log('writeValue $characteristic, ${hex.encode(value)}');
+      onWrite?.call(deviceId,characteristic,null);
+    }catch(e){
+      onWrite?.call(deviceId,characteristic,e.toString());
     }
-    _log('writeValue $characteristic, ${hex.encode(value)}');
   }
 
   @override
