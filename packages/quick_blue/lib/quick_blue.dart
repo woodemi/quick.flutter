@@ -26,22 +26,22 @@ class QuickBlue {
 
   static Future<void> startScan() => _platform.startScan();
 
-  static void stopScan() => _platform.stopScan();
+  static Future<void> stopScan() => _platform.stopScan();
 
   static Stream<BlueScanResult> get scanResultStream {
     return _platform.scanResultStream
       .map((item) => BlueScanResult.fromMap(item));
   }
 
-  static void connect(String deviceId) => _platform.connect(deviceId);
+  static Future<void> connect(String deviceId) => _platform.connect(deviceId);
 
-  static void disconnect(String deviceId) => _platform.disconnect(deviceId);
+  static Future<void> disconnect(String deviceId) => _platform.disconnect(deviceId);
 
   static void setConnectionHandler(OnConnectionChanged? onConnectionChanged) {
     _platform.onConnectionChanged = onConnectionChanged;
   }
 
-  static void discoverServices(String deviceId) => _platform.discoverServices(deviceId);
+  static Future<void> discoverServices(String deviceId) => _platform.discoverServices(deviceId);
 
   static void setServiceHandler(OnServiceDiscovered? onServiceDiscovered) {
     _platform.onServiceDiscovered = onServiceDiscovered;

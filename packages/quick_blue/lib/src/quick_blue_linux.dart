@@ -78,7 +78,7 @@ class QuickBlueLinux extends QuickBluePlatform {
     _log('startScan invoke success');
 
     if (!_activeAdapter!.discovering) {
-      _activeAdapter!.startDiscovery();
+      _activeAdapter!.startDiscovery(); //TODO This is async.  Should it be awaited, or should it have error handlers attached?
       _client.devices.forEach(_onDeviceAdd);
     }
   }
@@ -117,21 +117,21 @@ class QuickBlueLinux extends QuickBluePlatform {
   }
 
   @override
-  void connect(String deviceId) {
-    _findDeviceById(deviceId).connect().then((_) {
+  Future<void> connect(String deviceId) async {
+    await _findDeviceById(deviceId).connect().then((_) {
       onConnectionChanged?.call(deviceId, BlueConnectionState.connected);
     });
   }
 
   @override
-  void disconnect(String deviceId) {
-    _findDeviceById(deviceId).disconnect().then((_) {
+  Future<void> disconnect(String deviceId) async {
+    await _findDeviceById(deviceId).disconnect().then((_) {
       onConnectionChanged?.call(deviceId, BlueConnectionState.disconnected);
     });
   }
 
   @override
-  void discoverServices(String deviceId) {
+  Future<void> discoverServices(String deviceId) async {
     var device = _findDeviceById(deviceId);
 
     for (var service in device.gattServices) {
@@ -163,7 +163,7 @@ class QuickBlueLinux extends QuickBluePlatform {
     var c = _getCharacteristic(deviceId, service, characteristic);
     
     if (bleInputProperty != BleInputProperty.disabled) {
-      c.startNotify();
+      c.startNotify(); //TODO This is async.  Should it be awaited, or should it have error handlers attached?
       void onPropertiesChanged(properties) {
         if (properties.contains('Value')) {
           _log('onCharacteristicPropertiesChanged $characteristic, ${hex.encode(c.value)}');
@@ -172,8 +172,8 @@ class QuickBlueLinux extends QuickBluePlatform {
       }
       _characteristicPropertiesSubscriptions[characteristic] ??= c.propertiesChanged.listen(onPropertiesChanged);
     } else {
-      c.stopNotify();
-      _characteristicPropertiesSubscriptions.remove(characteristic)?.cancel();
+      c.stopNotify(); //TODO This is async.  Should it be awaited, or should it have error handlers attached?
+      _characteristicPropertiesSubscriptions.remove(characteristic)?.cancel(); //TODO This is async.  Should it be awaited, or should it have error handlers attached?
     }
   }
 

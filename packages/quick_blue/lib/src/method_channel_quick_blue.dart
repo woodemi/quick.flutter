@@ -56,22 +56,22 @@ class MethodChannelQuickBlue extends QuickBluePlatform {
   Stream<dynamic> get scanResultStream => _scanResultStream;
 
   @override
-  void connect(String deviceId) {
-    _method.invokeMethod('connect', {
+  Future<void> connect(String deviceId) async {
+    await _method.invokeMethod('connect', {
       'deviceId': deviceId,
     }).then((_) => _log('connect invokeMethod success'));
   }
 
   @override
-  void disconnect(String deviceId) {
-    _method.invokeMethod('disconnect', {
+  Future<void> disconnect(String deviceId) async {
+    await _method.invokeMethod('disconnect', {
       'deviceId': deviceId,
     }).then((_) => _log('disconnect invokeMethod success'));
   }
 
   @override
-  void discoverServices(String deviceId) {
-    _method.invokeMethod('discoverServices', {
+  Future<void> discoverServices(String deviceId) async {
+    await _method.invokeMethod('discoverServices', {
       'deviceId': deviceId,
     }).then((_) => _log('discoverServices invokeMethod success'));
   }
@@ -102,7 +102,7 @@ class MethodChannelQuickBlue extends QuickBluePlatform {
 
   @override
   Future<void> setNotifiable(String deviceId, String service, String characteristic, BleInputProperty bleInputProperty) async {
-    _method.invokeMethod('setNotifiable', {
+    await _method.invokeMethod('setNotifiable', {
       'deviceId': deviceId,
       'service': service,
       'characteristic': characteristic,
@@ -112,7 +112,7 @@ class MethodChannelQuickBlue extends QuickBluePlatform {
 
   @override
   Future<void> readValue(String deviceId, String service, String characteristic) async {
-    _method.invokeMethod('readValue', {
+    await _method.invokeMethod('readValue', {
       'deviceId': deviceId,
       'service': service,
       'characteristic': characteristic,
@@ -121,7 +121,7 @@ class MethodChannelQuickBlue extends QuickBluePlatform {
 
   @override
   Future<void> writeValue(String deviceId, String service, String characteristic, Uint8List value, BleOutputProperty bleOutputProperty) async {
-    _method.invokeMethod('writeValue', {
+    await _method.invokeMethod('writeValue', {
       'deviceId': deviceId,
       'service': service,
       'characteristic': characteristic,
@@ -140,7 +140,7 @@ class MethodChannelQuickBlue extends QuickBluePlatform {
 
   @override
   Future<int> requestMtu(String deviceId, int expectedMtu) async {
-    _method.invokeMethod('requestMtu', {
+    await _method.invokeMethod('requestMtu', {
       'deviceId': deviceId,
       'expectedMtu': expectedMtu,
     }).then((_) => _log('requestMtu invokeMethod success'));
