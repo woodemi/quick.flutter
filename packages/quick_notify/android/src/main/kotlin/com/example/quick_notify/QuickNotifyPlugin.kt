@@ -24,10 +24,19 @@ class QuickNotifyPlugin: FlutterPlugin, MethodCallHandler {
 
   private lateinit var notificationManager: NotificationManager
 
+  private final var channelCreated: Boolean = false
+
   private val channelProps = object {
     var id = "quick_notify"
     var name = "quick_notify"
     var importance = NotificationManager.IMPORTANCE_DEFAULT
+  }
+
+  private fun createChannel(){
+    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O){
+      notificationManager.createNotificationChannel(NotificationChannel(channelProps.id, channelProps.name, channelProps.importance))
+      channelCreated = true
+    }
   }
 
   override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
@@ -35,9 +44,7 @@ class QuickNotifyPlugin: FlutterPlugin, MethodCallHandler {
     channel.setMethodCallHandler(this)
     applicationContext = flutterPluginBinding.applicationContext
     notificationManager = applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-      notificationManager.createNotificationChannel(NotificationChannel(channelProps.id, channelProps.name, channelProps.importance))
-    }
+    if (notificationManager.areNotificationsEnabled()) createChannel()
   }
 
   override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
@@ -56,6 +63,8 @@ class QuickNotifyPlugin: FlutterPlugin, MethodCallHandler {
         result.notImplemented()
       }
     } else if (call.method == "notify") {
+      if(!channelCreated) createChannel()
+
       val args = call.arguments as Map<String, Any>
       val title = args["title"] as String
       val content = args["content"] as String
