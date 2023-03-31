@@ -281,9 +281,9 @@ namespace
         }
 
         // auto args = std::get<EncodableMap>(*method_call.arguments());
-        // auto serviceUUID = std::get<EncodableList>(args[EncodableValue("serviceUUID")]);
+        // auto serviceUUIDs = std::get<EncodableList>(args[EncodableValue("serviceUUIDs")]);
 
-        // if (serviceUUID.size() > 0)
+        // if (serviceUUIDs.size() > 0)
         // {
         //   auto filter = BluetoothLEAdvertisementFilter();
         //   auto advert = BluetoothLEAdvertisement();

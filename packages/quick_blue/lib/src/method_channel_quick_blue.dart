@@ -41,9 +41,9 @@ class MethodChannelQuickBlue extends QuickBluePlatform {
   Stream<int> get availabilityChangeStream => _availabilityChangeStream;
 
   @override
-  Future<void> startScan(List<String>? serviceUUID) async {
+  Future<void> startScan(List<String>? serviceUUIDs) async {
     await _method.invokeMethod('startScan', {
-      'serviceUUID': serviceUUID,
+      'serviceUUIDs': serviceUUIDs,
     });
     _log('startScan invokeMethod success');
   }

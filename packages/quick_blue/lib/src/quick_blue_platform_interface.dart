@@ -40,7 +40,7 @@ abstract class QuickBluePlatform extends PlatformInterface {
 
   Stream<int> get availabilityChangeStream;
 
-  Future<void> startScan(List<String>? serviceUUID);
+  Future<void> startScan(List<String>? serviceUUIDs);
 
   Future<void> stopScan();
 

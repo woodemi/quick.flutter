@@ -78,7 +78,7 @@ class QuickBlueLinux extends QuickBluePlatform {
   }
 
   @override
-  Future<void> startScan(List<String>? serviceUUID) async {
+  Future<void> startScan(List<String>? serviceUUIDs) async {
     await _ensureInitialized();
     _log('startScan invoke success');
 

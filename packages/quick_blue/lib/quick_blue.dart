@@ -24,8 +24,8 @@ class QuickBlue {
   static Stream<AvailabilityState> get availabilityChangeStream =>
       _platform.availabilityChangeStream.map(AvailabilityState.parse);
 
-  static Future<void> startScan({List<String>? serviceUUID}) =>
-      _platform.startScan(serviceUUID);
+  static Future<void> startScan({List<String>? serviceUUIDs}) =>
+      _platform.startScan(serviceUUIDs);
 
   static void stopScan() => _platform.stopScan();
 

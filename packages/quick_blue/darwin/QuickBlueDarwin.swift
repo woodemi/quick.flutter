@@ -78,7 +78,7 @@ public class QuickBlueDarwin: NSObject, FlutterPlugin {
       result(manager.state == .poweredOn)
     case "startScan":
       let arguments = call.arguments as! Dictionary<String, Any>
-      let serviceUUIDs = arguments["serviceUUID"] as? List<String>
+      let serviceUUIDs = arguments["serviceUUIDs"] as? List<String>
       if serviceUUIDs != nil && serviceUUIDs.count > 0 {
         manager.scanForPeripherals(withServices: serviceUUIDs)
       } else {

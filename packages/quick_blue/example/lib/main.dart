@@ -87,7 +87,7 @@ class _MyAppState extends State<MyApp> {
         ElevatedButton(
           child: const Text('startScan'),
           onPressed: () {
-            QuickBlue.startScan(serviceUUID: ['FF02']);
+            QuickBlue.startScan(serviceUUIDs: ['FF02']);
           },
         ),
         ElevatedButton(
