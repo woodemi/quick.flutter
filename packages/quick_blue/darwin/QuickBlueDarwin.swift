@@ -77,7 +77,13 @@ public class QuickBlueDarwin: NSObject, FlutterPlugin {
     case "isBluetoothAvailable":
       result(manager.state == .poweredOn)
     case "startScan":
-      manager.scanForPeripherals(withServices: nil)
+      let arguments = call.arguments as! Dictionary<String, Any>
+      let serviceUUIDs = arguments["serviceUUID"] as? List<String>
+      if serviceUUIDs != nil && serviceUUIDs.count > 0 {
+        manager.scanForPeripherals(withServices: serviceUUIDs)
+      } else {
+        manager.scanForPeripherals(withServices: nil)
+      }
       result(nil)
     case "stopScan":
       manager.stopScan()
@@ -117,7 +123,7 @@ public class QuickBlueDarwin: NSObject, FlutterPlugin {
       let deviceId = arguments["deviceId"] as! String
       let service = arguments["service"] as! String
       let characteristic = arguments["characteristic"] as! String
-      let bleInputProperty = arguments["bleInputProperty"] as! String
+      let bleInputProperty = argume<nts["bleInputProperty"] as! String
       guard let peripheral = discoveredPeripherals[deviceId] else {
         result(FlutterError(code: "IllegalArgument", message: "Unknown deviceId:\(deviceId)", details: nil))
         return
