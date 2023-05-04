@@ -120,6 +120,12 @@ var bulkTransferOut = await QuickUsb.bulkTransferOut(endpoint, data, timeout: 20
 print('bulkTransferOut $bulkTransferOut');
 ```
 
+### Control transfer
+```dart
+var result = await QuickUsb.controlTransfer(requestType, request, value, index, data, timeout: 2000);
+print('Control transfer successful: ${result > -1}');
+```
+
 ### Set auto detach kernel driver
 
 Enable/disable libusb's automatic kernel driver detachment on linux. When this is enabled libusb will automatically detach the kernel driver on an interface when claiming the interface, and attach it when releasing the interface.

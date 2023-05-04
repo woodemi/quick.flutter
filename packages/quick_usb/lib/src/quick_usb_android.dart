@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 
 import 'package:flutter/services.dart';
 import 'package:quick_usb/src/common.dart';
@@ -25,7 +24,8 @@ class QuickUsbAndroid extends QuickUsbPlatform {
 
   @override
   Future<List<UsbDevice>> getDeviceList() async {
-    List<Map<dynamic, dynamic>> devices = (await _channel.invokeListMethod('getDeviceList'))!;
+    List<Map<dynamic, dynamic>> devices =
+        (await _channel.invokeListMethod('getDeviceList'))!;
     return devices.map((device) => UsbDevice.fromMap(device)).toList();
   }
 
@@ -135,6 +135,11 @@ class QuickUsbAndroid extends QuickUsbPlatform {
       'timeout': timeout,
     });
   }
+
+  @override
+  Future<int> controlTransfer(int requestType, int request, int value,
+          int index, Uint8List data, int timeout) =>
+      throw UnimplementedError();
 
   @override
   Future<void> setAutoDetachKernelDriver(bool enable) async {}

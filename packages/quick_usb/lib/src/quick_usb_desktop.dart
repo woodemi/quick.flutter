@@ -32,7 +32,8 @@ class QuickUsbLinux extends _QuickUsbDesktop {
   // For example/.dart_tool/flutter_build/generated_main.dart
   static registerWith() {
     QuickUsbPlatform.instance = QuickUsbLinux();
-    _libusb = Libusb(DynamicLibrary.open('${File(Platform.resolvedExecutable).parent.path}/lib/libusb-1.0.23.so'));
+    _libusb = Libusb(DynamicLibrary.open(
+        '${File(Platform.resolvedExecutable).parent.path}/lib/libusb-1.0.23.so'));
   }
 }
 
@@ -89,7 +90,8 @@ class _QuickUsbDesktop extends QuickUsbPlatform {
   }
 
   @override
-  Future<List<UsbDeviceDescription>> getDevicesWithDescription({bool requestPermission = true}) async {
+  Future<List<UsbDeviceDescription>> getDevicesWithDescription(
+      {bool requestPermission = true}) async {
     var devices = await getDeviceList();
     var result = <UsbDeviceDescription>[];
     for (var device in devices) {
@@ -99,7 +101,8 @@ class _QuickUsbDesktop extends QuickUsbPlatform {
   }
 
   @override
-  Future<UsbDeviceDescription> getDeviceDescription(UsbDevice usbDevice, {bool requestPermission = true}) async {
+  Future<UsbDeviceDescription> getDeviceDescription(UsbDevice usbDevice,
+      {bool requestPermission = true}) async {
     String? manufacturer;
     String? product;
     String? serialNumber;
@@ -334,6 +337,35 @@ class _QuickUsbDesktop extends QuickUsbPlatform {
       return actualLengthPtr.value;
     } finally {
       ffi.calloc.free(actualLengthPtr);
+      ffi.calloc.free(dataPtr);
+    }
+  }
+
+  @override
+  Future<int> controlTransfer(int requestType, int request, int value,
+      int index, Uint8List data, int timeout) async {
+    assert(_devHandle != null, 'Device not open');
+
+    var dataPtr = ffi.calloc<Uint8>(data.length);
+    try {
+      var result = _libusb.libusb_control_transfer(
+        _devHandle!,
+        requestType,
+        request,
+        value,
+        index,
+        dataPtr,
+        data.length,
+        timeout,
+      );
+
+      if (result != libusb_error.LIBUSB_SUCCESS) {
+        debugPrint(
+            'controlTransferOut error: ${_libusb.describeError(result)}');
+        return -1;
+      }
+      return data.length;
+    } finally {
       ffi.calloc.free(dataPtr);
     }
   }

@@ -68,6 +68,12 @@ class QuickUsb {
           {int timeout = 1000}) =>
       _platform.bulkTransferOut(endpoint, data, timeout);
 
+  static Future<int> controlTransfer(
+          int requestType, int request, int value, int index, Uint8List data,
+          {int timeout = 1000}) =>
+      _platform.controlTransfer(
+          requestType, request, value, index, data, timeout);
+
   static Future<void> setAutoDetachKernelDriver(bool enable) =>
       _platform.setAutoDetachKernelDriver(enable);
 }
