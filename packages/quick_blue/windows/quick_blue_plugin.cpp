@@ -71,6 +71,48 @@ namespace
     return ss.str();
   }
 
+  union to_guid
+  {
+    uint8_t buf[16];
+    winrt::guid guid;
+  };
+
+  const uint8_t BYTE_ORDER[] = {3, 2, 1, 0, 5, 4, 7, 6, 8, 9, 10, 11, 12, 13, 14, 15};
+
+  winrt::guid make_guid(const char *value)
+  {
+    to_guid to_guid;
+    memset(&to_guid, 0, sizeof(to_guid));
+    int offset = 0;
+    for (int i = 0; i < (int)strlen(value); i++)
+    {
+      if (value[i] >= '0' && value[i] <= '9')
+      {
+        uint8_t digit = value[i] - '0';
+        to_guid.buf[BYTE_ORDER[offset / 2]] += offset % 2 == 0 ? digit << 4 : digit;
+        offset++;
+      }
+      else if (value[i] >= 'A' && value[i] <= 'F')
+      {
+        uint8_t digit = 10 + value[i] - 'A';
+        to_guid.buf[BYTE_ORDER[offset / 2]] += offset % 2 == 0 ? digit << 4 : digit;
+        offset++;
+      }
+      else if (value[i] >= 'a' && value[i] <= 'f')
+      {
+        uint8_t digit = 10 + value[i] - 'a';
+        to_guid.buf[BYTE_ORDER[offset / 2]] += offset % 2 == 0 ? digit << 4 : digit;
+        offset++;
+      }
+      else
+      {
+        // skip char
+      }
+    }
+
+    return to_guid.guid;
+  }
+
   std::string to_uuidstr(winrt::guid guid)
   {
     char chars[36 + 1];
@@ -280,17 +322,25 @@ namespace
           bluetoothLEWatcherReceivedToken = bluetoothLEWatcher.Received({this, &QuickBluePlugin::BluetoothLEWatcher_Received});
         }
 
-        // auto args = std::get<EncodableMap>(*method_call.arguments());
-        // auto serviceUUIDs = std::get<EncodableList>(args[EncodableValue("serviceUUIDs")]);
+        auto args = std::get<EncodableMap>(*method_call.arguments());
+        auto serviceUUIDs = std::get<EncodableList>(args[EncodableValue("serviceUUIDs")]);
 
-        // if (serviceUUIDs.size() > 0)
-        // {
-        //   auto filter = BluetoothLEAdvertisementFilter();
-        //   auto advert = BluetoothLEAdvertisement();
-        //   advert.ServiceUuids();
-        //   filter.Advertisement(advert);
-        //   bluetoothLEWatcher.AdvertisementFilter(filter);
-        // }
+        if (serviceUUIDs.size() > 0)
+        {
+          auto filter = BluetoothLEAdvertisementFilter();
+          auto advert = BluetoothLEAdvertisement();
+          for (size_t i = 0; i < serviceUUIDs.size(); i++)
+          {
+            std::string tmp = std::get<std::string>(serviceUUIDs[i]);
+
+            advert.ServiceUuids().Append(make_guid(tmp.c_str()));
+          }
+          filter.Advertisement(advert);
+          bluetoothLEWatcher.AdvertisementFilter(filter);
+        }
+        else
+        {
+        }
 
         bluetoothLEWatcher.Start();
         result->Success(nullptr);
