@@ -3,14 +3,17 @@ package com.example.quick_blue
 import android.annotation.SuppressLint
 import android.bluetooth.*
 import android.bluetooth.le.ScanCallback
+import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
-import android.content.Context
+import android.bluetooth.le.ScanSettings
 import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.os.ParcelUuid
 import android.util.Log
 import androidx.annotation.NonNull
 import io.flutter.embedding.engine.plugins.FlutterPlugin
@@ -52,6 +55,7 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
       broadcastReceiver,
       IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
     )
+
   }
 
   override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
@@ -79,7 +83,24 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
         result.success(bluetoothManager.adapter.isEnabled)
       }
       "startScan" -> {
-        bluetoothManager.adapter.bluetoothLeScanner?.startScan(scanCallback)
+        val serviceUUIDs = call.argument<ArrayList<String>>("serviceUUIDs")!!
+        if (serviceUUIDs != null && serviceUUIDs.size > 0) {
+          val filters: ArrayList<ScanFilter> = ArrayList()
+          for (serviceUUID in serviceUUIDs) {
+            val filter = ScanFilter.Builder()
+                    .setServiceUuid(parseToParcelUuid(serviceUUID))
+                    .build()
+            filters.add(filter)
+          }
+
+          val settings = ScanSettings.Builder()
+                  .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                  .build()
+
+          bluetoothManager.adapter.bluetoothLeScanner?.startScan(filters, settings, scanCallback)
+        } else {
+          bluetoothManager.adapter.bluetoothLeScanner?.startScan(scanCallback)
+        }
         result.success(null)
       }
       "stopScan" -> {
@@ -346,4 +367,19 @@ fun BluetoothGatt.setNotifiable(gattCharacteristic: BluetoothGattCharacteristic,
   }
   descriptor.value = value
   setCharacteristicNotification(descriptor.characteristic, enable) && writeDescriptor(descriptor)
+}
+const val baseBluetoothUuidPostfix = "0000-1000-8000-00805F9B34FB"
+
+fun parseToParcelUuid(uuid: String): ParcelUuid {
+  return when (uuid.length) {
+      4 -> {
+        ParcelUuid(UUID.fromString("0000$uuid-$baseBluetoothUuidPostfix"))
+      }
+      8 -> {
+        ParcelUuid(UUID.fromString("$uuid-$baseBluetoothUuidPostfix"))
+      }
+      else -> {
+        ParcelUuid.fromString(uuid)
+      }
+  }
 }
