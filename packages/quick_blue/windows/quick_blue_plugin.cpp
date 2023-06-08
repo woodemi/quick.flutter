@@ -113,6 +113,21 @@ namespace
     return to_guid.guid;
   }
 
+  std::string LongUUID(std::string str)
+  {
+    std::string baseBluetoothUuidPostfix("0000-1000-8000-00805F9B34FB");
+
+    switch (str.length())
+    {
+    case 4:
+      return "0000" + str + "-" + baseBluetoothUuidPostfix;
+    case 8:
+      return str + "-" + baseBluetoothUuidPostfix;
+    default:
+      return str;
+    }
+  }
+
   std::string to_uuidstr(winrt::guid guid)
   {
     char chars[36 + 1];
@@ -331,9 +346,10 @@ namespace
           auto advert = BluetoothLEAdvertisement();
           for (size_t i = 0; i < serviceUUIDs.size(); i++)
           {
-            std::string tmp = std::get<std::string>(serviceUUIDs[i]);
-
-            advert.ServiceUuids().Append(make_guid(tmp.c_str()));
+            std::string serviceString = std::get<std::string>(serviceUUIDs[i]);
+            auto serviceGuid = make_guid(LongUUID(serviceString).c_str());
+            advert.ServiceUuids().Append(serviceGuid);
+            OutputDebugStringA(to_uuidstr(serviceGuid).c_str());
           }
           filter.Advertisement(advert);
           bluetoothLEWatcher.AdvertisementFilter(filter);
