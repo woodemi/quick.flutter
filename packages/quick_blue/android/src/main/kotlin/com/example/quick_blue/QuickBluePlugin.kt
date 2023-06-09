@@ -77,6 +77,8 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
     mainThreadHandler.post { messageChannel.send(message) }
   }
 
+  fun trace() = Arrays.toString(Throwable().stackTrace)
+
   override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
     when (call.method) {
       "isBluetoothAvailable" -> {
@@ -125,7 +127,7 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
       "disconnect" -> {
         val deviceId = call.argument<String>("deviceId")!!
         val gatt = knownGatts.find { it.device.address == deviceId }
-                ?: return result.error("IllegalArgument", "Unknown deviceId: $deviceId", null)
+                ?: return result.error("IllegalArgument", "Unknown deviceId: $deviceId", trace())
         cleanConnection(gatt)
         result.success(null)
         //FIXME If `disconnect` is called before BluetoothGatt.STATE_CONNECTED
@@ -134,7 +136,7 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
       "discoverServices" -> {
         val deviceId = call.argument<String>("deviceId")!!
         val gatt = knownGatts.find { it.device.address == deviceId }
-                ?: return result.error("IllegalArgument", "Unknown deviceId: $deviceId", null)
+                ?: return result.error("IllegalArgument", "Unknown deviceId: $deviceId", trace())
         gatt.discoverServices()
         result.success(null)
       }
@@ -144,9 +146,9 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
         val characteristic = call.argument<String>("characteristic")!!
         val bleInputProperty = call.argument<String>("bleInputProperty")!!
         val gatt = knownGatts.find { it.device.address == deviceId }
-                ?: return result.error("IllegalArgument", "Unknown deviceId: $deviceId", null)
+                ?: return result.error("IllegalArgument", "Unknown deviceId: $deviceId", trace())
         val c = gatt.getCharacteristic(service, characteristic)
-                ?: return result.error("IllegalArgument", "Unknown characteristic: $characteristic", null)
+                ?: return result.error("IllegalArgument", "Unknown characteristic: $characteristic", trace())
         gatt.setNotifiable(c, bleInputProperty)
         result.success(null)
       }
@@ -155,13 +157,13 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
         val service = call.argument<String>("service")!!
         val characteristic = call.argument<String>("characteristic")!!
         val gatt = knownGatts.find { it.device.address == deviceId }
-                ?: return result.error("IllegalArgument", "Unknown deviceId: $deviceId", null)
+                ?: return result.error("IllegalArgument", "Unknown deviceId: $deviceId", trace())
         val c = gatt.getCharacteristic(service, characteristic)
-                ?: return result.error("IllegalArgument", "Unknown characteristic: $characteristic", null)
+                ?: return result.error("IllegalArgument", "Unknown characteristic: $characteristic", trace())
         if (gatt.readCharacteristic(c))
           result.success(null)
         else
-          result.error("Characteristic unavailable", null, null)
+          result.error("Characteristic unavailable", null, trace())
       }
       "writeValue" -> {
         val deviceId = call.argument<String>("deviceId")!!
@@ -169,20 +171,20 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
         val characteristic = call.argument<String>("characteristic")!!
         val value = call.argument<ByteArray>("value")!!
         val gatt = knownGatts.find { it.device.address == deviceId }
-                ?: return result.error("IllegalArgument", "Unknown deviceId: $deviceId", null)
+                ?: return result.error("IllegalArgument", "Unknown deviceId: $deviceId", trace())
         val c = gatt.getCharacteristic(service, characteristic)
-                ?: return result.error("IllegalArgument", "Unknown characteristic: $characteristic", null)
+                ?: return result.error("IllegalArgument", "Unknown characteristic: $characteristic", trace())
         c.value = value
         if (gatt.writeCharacteristic(c))
           result.success(null)
         else
-          result.error("Characteristic unavailable", null, null)
+          result.error("Characteristic unavailable", null, trace())
       }
       "requestMtu" -> {
         val deviceId = call.argument<String>("deviceId")!!
         val expectedMtu = call.argument<Int>("expectedMtu")!!
         val gatt = knownGatts.find { it.device.address == deviceId }
-                ?: return result.error("IllegalArgument", "Unknown deviceId: $deviceId", null)
+                ?: return result.error("IllegalArgument", "Unknown deviceId: $deviceId", trace())
         gatt.requestMtu(expectedMtu)
         result.success(null)
       }
