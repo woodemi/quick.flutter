@@ -233,7 +233,6 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
     }
 
     override fun onScanResult(callbackType: Int, result: ScanResult) {
-      Log.v(TAG, "onScanResult: $callbackType + $result")
       scanResultSink?.success(mapOf<String, Any>(
               "name" to (result.device.name ?: ""),
               "deviceId" to result.device.address,
