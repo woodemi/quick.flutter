@@ -3,14 +3,17 @@ package com.example.quick_blue
 import android.annotation.SuppressLint
 import android.bluetooth.*
 import android.bluetooth.le.ScanCallback
+import android.bluetooth.le.ScanFilter
 import android.bluetooth.le.ScanResult
-import android.content.Context
+import android.bluetooth.le.ScanSettings
 import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.os.ParcelUuid
 import android.util.Log
 import androidx.annotation.NonNull
 import io.flutter.embedding.engine.plugins.FlutterPlugin
@@ -52,6 +55,7 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
       broadcastReceiver,
       IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
     )
+
   }
 
   override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
@@ -82,7 +86,24 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
           result.success(bluetoothManager.adapter.isEnabled)
         }
         "startScan" -> {
-          bluetoothManager.adapter.bluetoothLeScanner?.startScan(scanCallback)
+          val serviceUUIDs = call.argument<ArrayList<String>>("serviceUUIDs")!!
+          if (serviceUUIDs != null && serviceUUIDs.size > 0) {
+            val filters: ArrayList<ScanFilter> = ArrayList()
+            for (serviceUUID in serviceUUIDs) {
+              val filter = ScanFilter.Builder()
+                      .setServiceUuid(parseToParcelUuid(serviceUUID))
+                      .build()
+              filters.add(filter)
+            }
+
+            val settings = ScanSettings.Builder()
+                    .setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                    .build()
+
+            bluetoothManager.adapter.bluetoothLeScanner?.startScan(filters, settings, scanCallback)
+          } else {
+            bluetoothManager.adapter.bluetoothLeScanner?.startScan(scanCallback)
+          }
           result.success(null)
         }
         "stopScan" -> {
@@ -216,11 +237,10 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
 
   private val scanCallback = object : ScanCallback() {
     override fun onScanFailed(errorCode: Int) {
-      Log.v(TAG, "onScanFailed: $errorCode")
+      //Log.v(TAG, "onScanFailed: $errorCode")
     }
 
     override fun onScanResult(callbackType: Int, result: ScanResult) {
-      Log.v(TAG, "onScanResult: $callbackType + $result")
       scanResultSink?.success(mapOf<String, Any>(
               "name" to (result.device.name ?: ""),
               "deviceId" to result.device.address,
@@ -230,7 +250,7 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
     }
 
     override fun onBatchScanResults(results: MutableList<ScanResult>?) {
-      Log.v(TAG, "onBatchScanResults: $results")
+      //Log.v(TAG, "onBatchScanResults: $results")
     }
   }
 
@@ -258,7 +278,7 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
 
   private val gattCallback = object : BluetoothGattCallback() {
     override fun onConnectionStateChange(gatt: BluetoothGatt, status: Int, newState: Int) {
-      Log.v(TAG, "onConnectionStateChange: device(${gatt.device.address}) status($status), newState($newState)")
+      //Log.v(TAG, "onConnectionStateChange: device(${gatt.device.address}) status($status), newState($newState)")
       if (newState == BluetoothGatt.STATE_CONNECTED && status == BluetoothGatt.GATT_SUCCESS) {
         sendMessage(messageConnector, mapOf(
           "deviceId" to gatt.device.address,
@@ -274,15 +294,15 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
     }
 
     override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
-      Log.v(TAG, "onServicesDiscovered ${gatt.device.address} $status")
+      //Log.v(TAG, "onServicesDiscovered ${gatt.device.address} $status")
       if (status != BluetoothGatt.GATT_SUCCESS) return
 
       gatt.services?.forEach { service ->
-        Log.v(TAG, "Service " + service.uuid)
+        //Log.v(TAG, "Service " + service.uuid)
         service.characteristics.forEach { characteristic ->
-          Log.v(TAG, "    Characteristic ${characteristic.uuid}")
+          //Log.v(TAG, "    Characteristic ${characteristic.uuid}")
           characteristic.descriptors.forEach {
-            Log.v(TAG, "        Descriptor ${it.uuid}")
+            //Log.v(TAG, "        Descriptor ${it.uuid}")
           }
         }
 
@@ -304,7 +324,7 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
     }
 
     override fun onCharacteristicRead(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int) {
-      Log.v(TAG, "onCharacteristicRead ${characteristic.uuid}, ${characteristic.value.contentToString()}")
+      //Log.v(TAG, "onCharacteristicRead ${characteristic.uuid}, ${characteristic.value.contentToString()}")
       sendMessage(messageConnector, mapOf(
         "deviceId" to gatt.device.address,
         "characteristicValue" to mapOf(
@@ -315,11 +335,11 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
     }
 
     override fun onCharacteristicWrite(gatt: BluetoothGatt?, characteristic: BluetoothGattCharacteristic, status: Int) {
-      Log.v(TAG, "onCharacteristicWrite ${characteristic.uuid}, ${characteristic.value.contentToString()} $status")
+      //Log.v(TAG, "onCharacteristicWrite ${characteristic.uuid}, ${characteristic.value.contentToString()} $status")
     }
 
     override fun onCharacteristicChanged(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
-      Log.v(TAG, "onCharacteristicChanged ${characteristic.uuid}, ${characteristic.value.contentToString()}")
+      //Log.v(TAG, "onCharacteristicChanged ${characteristic.uuid}, ${characteristic.value.contentToString()}")
       sendMessage(messageConnector, mapOf(
         "deviceId" to gatt.device.address,
         "characteristicValue" to mapOf(
@@ -357,5 +377,20 @@ fun BluetoothGatt.setNotifiable(gattCharacteristic: BluetoothGattCharacteristic,
   if (setCharacteristicNotification(gattCharacteristic, enable) && descriptor != null) {
     descriptor.value = value
     writeDescriptor(descriptor)
+  }
+}
+const val baseBluetoothUuidPostfix = "0000-1000-8000-00805F9B34FB"
+
+fun parseToParcelUuid(uuid: String): ParcelUuid {
+  return when (uuid.length) {
+      4 -> {
+        ParcelUuid(UUID.fromString("0000$uuid-$baseBluetoothUuidPostfix"))
+      }
+      8 -> {
+        ParcelUuid(UUID.fromString("$uuid-$baseBluetoothUuidPostfix"))
+      }
+      else -> {
+        ParcelUuid.fromString(uuid)
+      }
   }
 }
