@@ -24,6 +24,10 @@
 #include <algorithm>
 #include <iomanip>
 
+#include <codecvt>
+#include <locale>
+#include <iostream>
+
 #define GUID_FORMAT "%08x-%04hx-%04hx-%02hhx%02hhx-%02hhx%02hhx%02hhx%02hhx%02hhx%02hhx"
 #define GUID_ARG(guid) guid.Data1, guid.Data2, guid.Data3, guid.Data4[0], guid.Data4[1], guid.Data4[2], guid.Data4[3], guid.Data4[4], guid.Data4[5], guid.Data4[6], guid.Data4[7]
 
@@ -88,15 +92,22 @@ struct BluetoothDeviceAgent {
   }
 
   IAsyncOperation<GattDeviceService> GetServiceAsync(std::string service) {
+    std::cerr << "--> GetServiceAsync\n";
     if (gattServices.count(service) == 0) {
       auto serviceResult = co_await device.GetGattServicesAsync();
-      if (serviceResult.Status() != GattCommunicationStatus::Success)
+      if (serviceResult.Status() != GattCommunicationStatus::Success) {
+        std::cerr << "<-E GetServiceAsync\n";
         co_return nullptr;
+      }
 
       for (auto s : serviceResult.Services())
-        if (to_uuidstr(s.Uuid()) == service)
+        if (to_uuidstr(s.Uuid()) == service) {
+          std::wcerr << ((L"gattServices addr: " + std::to_wstring((unsigned long long)&gattServices) + L"\n").c_str());
+          std::wcerr << ((L"gattServices size: " + std::to_wstring(gattServices.size()) + L"\n").c_str());
           gattServices.insert(std::make_pair(service, s));
+        }
     }
+    std::cerr << "<-S GetServiceAsync\n";
     co_return gattServices.at(service);
   }
 
@@ -238,14 +249,21 @@ winrt::fire_and_forget QuickBluePlugin::InitializeAsync() {
   }
 }
 
+//void dbg(std::wstring s) {
+//    std::cerr
+//}
+
 void QuickBluePlugin::HandleMethodCall(
     const flutter::MethodCall<flutter::EncodableValue> &method_call,
     std::unique_ptr<flutter::MethodResult<flutter::EncodableValue>> result) {
   auto method_name = method_call.method_name();
   OutputDebugString((L"HandleMethodCall " + winrt::to_hstring(method_name) + L"\n").c_str());
   if (method_name.compare("isBluetoothAvailable") == 0) {
+    std::wcerr << (L"--> isBluetoothAvailable\n");
     result->Success(EncodableValue(bluetoothRadio && bluetoothRadio.State() == RadioState::On));
+    std::wcerr << (L"<-S isBluetoothAvailable\n");
   } else if (method_name.compare("startScan") == 0) {
+    std::wcerr << (L"--> startScan\n");
     if (bluetoothRadio && bluetoothRadio.State() == RadioState::On) {
       if (!bluetoothLEWatcher) {
         bluetoothLEWatcher = BluetoothLEAdvertisementWatcher();
@@ -253,10 +271,13 @@ void QuickBluePlugin::HandleMethodCall(
       }
       bluetoothLEWatcher.Start();
       result->Success(nullptr);
+      std::wcerr << (L"<-S startScan\n");
     } else {
       result->Error("IllegalState", "Bluetooth unavailable");
+      std::wcerr << (L"<-E startScan\n");
     }
   } else if (method_name.compare("stopScan") == 0) {
+    std::wcerr << (L"--> stopScan\n");
     if (bluetoothRadio && bluetoothRadio.State() == RadioState::On) {
       if (bluetoothLEWatcher) {
         bluetoothLEWatcher.Stop();
@@ -264,31 +285,49 @@ void QuickBluePlugin::HandleMethodCall(
       }
       bluetoothLEWatcher = nullptr;
       result->Success(nullptr);
+      std::wcerr << (L"<-S stopScan\n");
     } else {
       result->Error("IllegalState", "Bluetooth unavailable");
+      std::wcerr << (L"<-E stopScan\n");
     }
   } else if (method_name.compare("connect") == 0) {
+    std::wcerr << (L"--> connect\n");
     auto args = std::get<EncodableMap>(*method_call.arguments());
     auto deviceId = std::get<std::string>(args[EncodableValue("deviceId")]);
+    OutputDebugStringW(L"asdf X\n");
+    std::cerr << ("asdf 0\n");
+    std::wcerr << (L"asdf 0b\n");
+    std::wstring wsTmp(deviceId.begin(), deviceId.end());
+    std::wcerr << (L"asdf 1\n");
+    std::wcerr << ((L"connect bluetoothAddress string: " + wsTmp + L"\n").c_str());
+    std::wcerr << ((L"connect bluetoothAddress stoull: " + std::to_wstring(std::stoull(deviceId)) + L"\n").c_str());
+    std::wcerr << (L"asdf 2\n");
     ConnectAsync(std::stoull(deviceId));
     result->Success(nullptr);
+    std::wcerr << (L"<-S connect\n");
   } else if (method_name.compare("disconnect") == 0) {
+    std::wcerr << (L"--> disconnect\n");
     auto args = std::get<EncodableMap>(*method_call.arguments());
     auto deviceId = std::get<std::string>(args[EncodableValue("deviceId")]);
     CleanConnection(std::stoull(deviceId));
     // TODO send `disconnected` message
     result->Success(nullptr);
+    std::wcerr << (L"<-S disconnect\n");
   } else if (method_name.compare("discoverServices") == 0) {
+    std::wcerr << (L"--> discoverServices\n");
     auto args = std::get<EncodableMap>(*method_call.arguments());
     auto deviceId = std::get<std::string>(args[EncodableValue("deviceId")]);
     auto it = connectedDevices.find(std::stoull(deviceId));
     if (it == connectedDevices.end()) {
       result->Error("IllegalArgument", "Unknown devicesId:" + deviceId);
+      std::wcerr << (L"<-E discoverServices\n");
       return;
     }
     DiscoverServicesAsync(*it->second);
     result->Success(nullptr);
+    std::wcerr << (L"<-S discoverServices\n");
   } else if (method_name.compare("setNotifiable") == 0) {
+    std::wcerr << (L"--> setNotifiable\n");
     auto args = std::get<EncodableMap>(*method_call.arguments());
     auto deviceId = std::get<std::string>(args[EncodableValue("deviceId")]);
     auto service = std::get<std::string>(args[EncodableValue("service")]);
@@ -297,6 +336,7 @@ void QuickBluePlugin::HandleMethodCall(
     auto it = connectedDevices.find(std::stoull(deviceId));
     if (it == connectedDevices.end()) {
       result->Error("IllegalArgument", "Unknown devicesId:" + deviceId);
+      std::wcerr << (L"<-E setNotifiable\n");
       return;
     }
 
@@ -308,12 +348,15 @@ void QuickBluePlugin::HandleMethodCall(
           auto c = sender.GetResults();
           if (c == nullptr) {
             result_pointer->Error("IllegalArgument", "Unknown characteristic:" + characteristic);
+            std::wcerr << (L"<-E setNotifiable 2\n");
             return;
           }
           SetNotifiableAsync(bluetoothAgent, c, bleInputProperty);
           result_pointer->Success(nullptr);
+          std::wcerr << (L"<-S setNotifiable\n");
         });
   } else if (method_name.compare("readValue") == 0) {
+    std::wcerr << (L"--> readValue\n");
     auto args = std::get<EncodableMap>(*method_call.arguments());
     auto deviceId = std::get<std::string>(args[EncodableValue("deviceId")]);
     auto service = std::get<std::string>(args[EncodableValue("service")]);
@@ -321,6 +364,7 @@ void QuickBluePlugin::HandleMethodCall(
     auto it = connectedDevices.find(std::stoull(deviceId));
     if (it == connectedDevices.end()) {
       result->Error("IllegalArgument", "Unknown devicesId:" + deviceId);
+      std::wcerr << (L"<-E readValue\n");
       return;
     }
 
@@ -332,12 +376,15 @@ void QuickBluePlugin::HandleMethodCall(
           auto c = sender.GetResults();
           if (c == nullptr) {
             result_pointer->Error("IllegalArgument", "Unknown characteristic:" + characteristic);
+            std::wcerr << (L"<-E readValue\n");
             return;
           }
           ReadValueAsync(c);
           result_pointer->Success(nullptr);
+          std::wcerr << (L"<-S readValue\n");
         });
   } else if (method_name.compare("writeValue") == 0) {
+    std::wcerr << (L"--> writeValue\n");
     auto args = std::get<EncodableMap>(*method_call.arguments());
     auto deviceId = std::get<std::string>(args[EncodableValue("deviceId")]);
     auto service = std::get<std::string>(args[EncodableValue("service")]);
@@ -347,6 +394,7 @@ void QuickBluePlugin::HandleMethodCall(
     auto it = connectedDevices.find(std::stoull(deviceId));
     if (it == connectedDevices.end()) {
       result->Error("IllegalArgument", "Unknown devicesId:" + deviceId);
+      std::wcerr << (L"<-E writeValue\n");
       return;
     }
 
@@ -358,25 +406,32 @@ void QuickBluePlugin::HandleMethodCall(
           auto c = sender.GetResults();
           if (c == nullptr) {
             result_pointer->Error("IllegalArgument", "Unknown characteristic:" + characteristic);
+            std::wcerr << (L"<-E writeValue\n");
             return;
           }
           WriteValueAsync(c, value, bleOutputProperty);
           result_pointer->Success(nullptr);
+          std::wcerr << (L"<-S writeValue\n");
         });
   } else if (method_name.compare("requestMtu") == 0) {
+    std::wcerr << (L"--> requestMtu\n");
     auto args = std::get<EncodableMap>(*method_call.arguments());
     auto deviceId = std::get<std::string>(args[EncodableValue("deviceId")]);
     auto expectedMtu = std::get<int32_t>(args[EncodableValue("expectedMtu")]);
     auto it = connectedDevices.find(std::stoull(deviceId));
     if (it == connectedDevices.end()) {
       result->Error("IllegalArgument", "Unknown devicesId:" + deviceId);
+      std::wcerr << (L"<-E requestMtu\n");
       return;
     }
 
     RequestMtuAsync(*it->second, expectedMtu);
     result->Success(nullptr);
+    std::wcerr << (L"<-S requestMtu\n");
   } else {
+    std::wcerr << (L"--> NotImplemented\n");
     result->NotImplemented();
+    std::wcerr << (L"<-- NotImplemented\n");
   }
 }
 
@@ -482,7 +537,12 @@ std::unique_ptr<flutter::StreamHandlerError<EncodableValue>> QuickBluePlugin::On
 }
 
 winrt::fire_and_forget QuickBluePlugin::ConnectAsync(uint64_t bluetoothAddress) {
+  std::wcerr << ((L"ConnectAsync bluetoothAddress: " + std::to_wstring(bluetoothAddress) + L"\n").c_str());
   auto device = co_await BluetoothLEDevice::FromBluetoothAddressAsync(bluetoothAddress);
+  if (!device) {
+      std::wcerr << ((L"ConnectAsync null device! "+ std::to_wstring(bluetoothAddress) +L"\n").c_str());
+      co_return;
+  }
   auto servicesResult = co_await device.GetGattServicesAsync();
   if (servicesResult.Status() != GattCommunicationStatus::Success) {
     OutputDebugString((L"GetGattServicesAsync error: " + winrt::to_hstring((int32_t)servicesResult.Status()) + L"\n").c_str());

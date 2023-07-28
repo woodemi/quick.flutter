@@ -76,100 +76,108 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
   fun trace() = Arrays.toString(Throwable().stackTrace)
 
   override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
-    when (call.method) {
-      "isBluetoothAvailable" -> {
-        result.success(bluetoothManager.adapter.isEnabled)
-      }
-      "startScan" -> {
-        bluetoothManager.adapter.bluetoothLeScanner?.startScan(scanCallback)
-        result.success(null)
-      }
-      "stopScan" -> {
-        bluetoothManager.adapter.bluetoothLeScanner?.stopScan(scanCallback)
-        result.success(null)
-      }
-      "connect" -> {
-        val deviceId = call.argument<String>("deviceId")!!
-        if (knownGatts.find { it.device.address == deviceId } != null) {
-          return result.success(null)
+    try {
+      when (call.method) {
+        "isBluetoothAvailable" -> {
+          result.success(bluetoothManager.adapter.isEnabled)
         }
-        val remoteDevice = bluetoothManager.adapter.getRemoteDevice(deviceId)
-        val gatt = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-          remoteDevice.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
-        } else {
-          remoteDevice.connectGatt(context, false, gattCallback)
+        "startScan" -> {
+          bluetoothManager.adapter.bluetoothLeScanner?.startScan(scanCallback)
+          result.success(null)
         }
-        knownGatts.add(gatt)
-        result.success(null)
-        // TODO connecting
-      }
-      "disconnect" -> {
-        val deviceId = call.argument<String>("deviceId")!!
-        val gatt = knownGatts.find { it.device.address == deviceId }
-                ?: return result.error("IllegalArgument", "Unknown deviceId: $deviceId", trace())
-        cleanConnection(gatt)
-        result.success(null)
-        //FIXME If `disconnect` is called before BluetoothGatt.STATE_CONNECTED
-        // there will be no `disconnected` message any more
-      }
-      "discoverServices" -> {
-        val deviceId = call.argument<String>("deviceId")!!
-        val gatt = knownGatts.find { it.device.address == deviceId }
-                ?: return result.error("IllegalArgument", "Unknown deviceId: $deviceId", trace())
-        gatt.discoverServices()
-        result.success(null)
-      }
-      "setNotifiable" -> {
-        val deviceId = call.argument<String>("deviceId")!!
-        val service = call.argument<String>("service")!!
-        val characteristic = call.argument<String>("characteristic")!!
-        val bleInputProperty = call.argument<String>("bleInputProperty")!!
-        val gatt = knownGatts.find { it.device.address == deviceId }
-                ?: return result.error("IllegalArgument", "Unknown deviceId: $deviceId", trace())
-        val c = gatt.getCharacteristic(service, characteristic)
-                ?: return result.error("IllegalArgument", "Unknown characteristic: $characteristic", trace())
-        gatt.setNotifiable(c, bleInputProperty)
-        result.success(null)
-      }
-      "readValue" -> {
-        val deviceId = call.argument<String>("deviceId")!!
-        val service = call.argument<String>("service")!!
-        val characteristic = call.argument<String>("characteristic")!!
-        val gatt = knownGatts.find { it.device.address == deviceId }
-                ?: return result.error("IllegalArgument", "Unknown deviceId: $deviceId", trace())
-        val c = gatt.getCharacteristic(service, characteristic)
-                ?: return result.error("IllegalArgument", "Unknown characteristic: $characteristic", trace())
-        if (gatt.readCharacteristic(c))
+        "stopScan" -> {
+          bluetoothManager.adapter.bluetoothLeScanner?.stopScan(scanCallback)
           result.success(null)
-        else
-          result.error("Characteristic unavailable", null, trace())
-      }
-      "writeValue" -> {
-        val deviceId = call.argument<String>("deviceId")!!
-        val service = call.argument<String>("service")!!
-        val characteristic = call.argument<String>("characteristic")!!
-        val value = call.argument<ByteArray>("value")!!
-        val gatt = knownGatts.find { it.device.address == deviceId }
-                ?: return result.error("IllegalArgument", "Unknown deviceId: $deviceId", trace())
-        val c = gatt.getCharacteristic(service, characteristic)
-                ?: return result.error("IllegalArgument", "Unknown characteristic: $characteristic", trace())
-        c.value = value
-        if (gatt.writeCharacteristic(c))
+        }
+        "connect" -> {
+          val deviceId = call.argument<String>("deviceId")!!
+          if (knownGatts.find { it.device.address == deviceId } != null) {
+            return result.success(null)
+          }
+          val remoteDevice = bluetoothManager.adapter.getRemoteDevice(deviceId)
+          val gatt = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            remoteDevice.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
+          } else {
+            remoteDevice.connectGatt(context, false, gattCallback)
+          }
+          knownGatts.add(gatt)
           result.success(null)
-        else
-          result.error("Characteristic unavailable", null, trace())
+          // TODO connecting
+        }
+        "disconnect" -> {
+          val deviceId = call.argument<String>("deviceId")!!
+          val gatt = knownGatts.find { it.device.address == deviceId }
+                  ?: return result.error("IllegalArgument", "Unknown deviceId: $deviceId", trace())
+          cleanConnection(gatt)
+          result.success(null)
+          //FIXME If `disconnect` is called before BluetoothGatt.STATE_CONNECTED
+          // there will be no `disconnected` message any more
+        }
+        "discoverServices" -> {
+          val deviceId = call.argument<String>("deviceId")!!
+          val gatt = knownGatts.find { it.device.address == deviceId }
+                  ?: return result.error("IllegalArgument", "Unknown deviceId: $deviceId", trace())
+          gatt.discoverServices()
+          result.success(null)
+        }
+        "setNotifiable" -> {
+          val deviceId = call.argument<String>("deviceId")!!
+          val service = call.argument<String>("service")!!
+          val characteristic = call.argument<String>("characteristic")!!
+          val bleInputProperty = call.argument<String>("bleInputProperty")!!
+          val gatt = knownGatts.find { it.device.address == deviceId }
+                  ?: return result.error("IllegalArgument", "Unknown deviceId: $deviceId", trace())
+          val s = gatt.getService(UUID.fromString(service))
+                  ?: return result.error("IllegalArgument", "Unknown service: $service", trace())
+          val c = s.getCharacteristic(UUID.fromString(characteristic))
+                  ?: return result.error("IllegalArgument", "Unknown characteristic: $characteristic", trace())
+          gatt.setNotifiable(c, bleInputProperty)
+          result.success(null)
+        }
+        "readValue" -> {
+          val deviceId = call.argument<String>("deviceId")!!
+          val service = call.argument<String>("service")!!
+          val characteristic = call.argument<String>("characteristic")!!
+          val gatt = knownGatts.find { it.device.address == deviceId }
+                  ?: return result.error("IllegalArgument", "Unknown deviceId: $deviceId", trace())
+          val c = gatt.getCharacteristic(service, characteristic)
+                  ?: return result.error("IllegalArgument", "Unknown characteristic: $characteristic", trace())
+          if (gatt.readCharacteristic(c))
+            result.success(null)
+          else
+            result.error("Characteristic unavailable", null, trace())
+        }
+        "writeValue" -> {
+          val deviceId = call.argument<String>("deviceId")!!
+          val service = call.argument<String>("service")!!
+          val characteristic = call.argument<String>("characteristic")!!
+          val value = call.argument<ByteArray>("value")!!
+          val gatt = knownGatts.find { it.device.address == deviceId }
+                  ?: return result.error("IllegalArgument", "Unknown deviceId: $deviceId", trace())
+          val c = gatt.getCharacteristic(service, characteristic)
+                  ?: return result.error("IllegalArgument", "Unknown characteristic: $characteristic", trace())
+          c.value = value
+          if (gatt.writeCharacteristic(c)) {
+            result.success(null)
+          } else {
+            result.error("Characteristic unavailable", null, trace())
+          }
+        }
+        "requestMtu" -> {
+          val deviceId = call.argument<String>("deviceId")!!
+          val expectedMtu = call.argument<Int>("expectedMtu")!!
+          val gatt = knownGatts.find { it.device.address == deviceId }
+                  ?: return result.error("IllegalArgument", "Unknown deviceId: $deviceId", trace())
+          gatt.requestMtu(expectedMtu)
+          result.success(null)
+        }
+        else -> {
+          result.notImplemented()
+        }
       }
-      "requestMtu" -> {
-        val deviceId = call.argument<String>("deviceId")!!
-        val expectedMtu = call.argument<Int>("expectedMtu")!!
-        val gatt = knownGatts.find { it.device.address == deviceId }
-                ?: return result.error("IllegalArgument", "Unknown deviceId: $deviceId", trace())
-        gatt.requestMtu(expectedMtu)
-        result.success(null)
-      }
-      else -> {
-        result.notImplemented()
-      }
+    } catch (e: Throwable) {
+      e.printStackTrace()
+      result.error("Error", "Error", trace())
     }
   }
 
@@ -335,7 +343,7 @@ fun Short.toByteArray(byteOrder: ByteOrder = ByteOrder.LITTLE_ENDIAN): ByteArray
         ByteBuffer.allocate(2 /*Short.SIZE_BYTES*/).order(byteOrder).putShort(this).array()
 
 fun BluetoothGatt.getCharacteristic(service: String, characteristic: String): BluetoothGattCharacteristic? =
-        getService(UUID.fromString(service)).getCharacteristic(UUID.fromString(characteristic))
+        getService(UUID.fromString(service))?.getCharacteristic(UUID.fromString(characteristic))
 
 private val DESC__CLIENT_CHAR_CONFIGURATION = UUID.fromString("00002902-0000-1000-8000-00805f9b34fb")
 
@@ -346,6 +354,8 @@ fun BluetoothGatt.setNotifiable(gattCharacteristic: BluetoothGattCharacteristic,
     "indication" -> BluetoothGattDescriptor.ENABLE_INDICATION_VALUE to true
     else -> BluetoothGattDescriptor.DISABLE_NOTIFICATION_VALUE to false
   }
-  descriptor.value = value
-  setCharacteristicNotification(descriptor.characteristic, enable) && writeDescriptor(descriptor)
+  if (setCharacteristicNotification(gattCharacteristic, enable) && descriptor != null) {
+    descriptor.value = value
+    writeDescriptor(descriptor)
+  }
 }
