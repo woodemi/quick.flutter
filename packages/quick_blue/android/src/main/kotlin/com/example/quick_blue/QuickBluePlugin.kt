@@ -86,7 +86,7 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
           result.success(bluetoothManager.adapter.isEnabled)
         }
         "startScan" -> {
-          val serviceUUIDs = call.argument<ArrayList<String>>("serviceUUIDs")!!
+          val serviceUUIDs = call.argument<ArrayList<String>>("serviceUUIDs")
           if (serviceUUIDs != null && serviceUUIDs.size > 0) {
             val filters: ArrayList<ScanFilter> = ArrayList()
             for (serviceUUID in serviceUUIDs) {
