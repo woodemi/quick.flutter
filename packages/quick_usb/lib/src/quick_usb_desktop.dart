@@ -4,7 +4,7 @@ import 'dart:typed_data';
 
 import 'package:ffi/ffi.dart' as ffi;
 import 'package:flutter/foundation.dart';
-import 'package:libusb/libusb64.dart';
+import 'package:libusb/libusb.dart';
 import 'package:quick_usb/src/common.dart';
 
 import 'quick_usb_platform_interface.dart';
@@ -206,7 +206,7 @@ class _QuickUsbDesktop extends QuickUsbPlatform {
         id: configDescPtr.ref.bConfigurationValue,
         index: configDescPtr.ref.iConfiguration,
         interfaces: _iterateInterface(
-                configDescPtr.ref.interface_1, configDescPtr.ref.bNumInterfaces)
+                configDescPtr.ref.interface1, configDescPtr.ref.bNumInterfaces)
             .toList(),
       );
       _libusb.libusb_free_config_descriptor(configDescPtr);
@@ -288,8 +288,8 @@ class _QuickUsbDesktop extends QuickUsbPlatform {
     assert(endpoint.direction == UsbEndpoint.DIRECTION_IN,
         'Endpoint\'s direction should be in');
 
-    var actualLengthPtr = ffi.calloc<Int32>();
-    var dataPtr = ffi.calloc<Uint8>(maxLength);
+    var actualLengthPtr = ffi.calloc<Int>();
+    var dataPtr = ffi.calloc<UnsignedChar>(maxLength);
     try {
       var result = _libusb.libusb_bulk_transfer(
         _devHandle!,
@@ -303,7 +303,8 @@ class _QuickUsbDesktop extends QuickUsbPlatform {
       if (result != libusb_error.LIBUSB_SUCCESS) {
         throw 'bulkTransferIn error: ${_libusb.describeError(result)}';
       }
-      return Uint8List.fromList(dataPtr.asTypedList(actualLengthPtr.value));
+      return Uint8List.fromList(
+          dataPtr.cast<Uint8>().asTypedList(actualLengthPtr.value));
     } finally {
       ffi.calloc.free(actualLengthPtr);
       ffi.calloc.free(dataPtr);
@@ -317,14 +318,14 @@ class _QuickUsbDesktop extends QuickUsbPlatform {
     assert(endpoint.direction == UsbEndpoint.DIRECTION_OUT,
         'Endpoint\'s direction should be out');
 
-    var actualLengthPtr = ffi.calloc<Int32>();
+    var actualLengthPtr = ffi.calloc<Int>();
     var dataPtr = ffi.calloc<Uint8>(data.length);
     dataPtr.asTypedList(data.length).setAll(0, data);
     try {
       var result = _libusb.libusb_bulk_transfer(
         _devHandle!,
         endpoint.endpointAddress,
-        dataPtr,
+        dataPtr.cast<UnsignedChar>(),
         data.length,
         actualLengthPtr,
         timemout,
@@ -346,7 +347,7 @@ class _QuickUsbDesktop extends QuickUsbPlatform {
       int index, Uint8List data, int timeout) async {
     assert(_devHandle != null, 'Device not open');
 
-    var dataPtr = ffi.calloc<Uint8>(data.length);
+    var dataPtr = ffi.calloc<UnsignedChar>(data.length);
     try {
       var result = _libusb.libusb_control_transfer(
         _devHandle!,
