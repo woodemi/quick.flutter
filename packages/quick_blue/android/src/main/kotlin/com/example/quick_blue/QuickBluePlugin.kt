@@ -195,8 +195,9 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
   }
 
   private fun cleanConnection(gatt: BluetoothGatt) {
-    knownGatts.remove(gatt)
+    gatt.close()
     gatt.disconnect()
+    knownGatts.remove(gatt)
   }
 
   enum class AvailabilityState(val value: Int) {
