@@ -185,8 +185,11 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
         val expectedMtu = call.argument<Int>("expectedMtu")!!
         val gatt = knownGatts.find { it.device.address == deviceId }
                 ?: return result.error("IllegalArgument", "Unknown deviceId: $deviceId", trace())
-        gatt.requestMtu(expectedMtu)
-        result.success(null)
+        val success = gatt.requestMtu(expectedMtu)
+        if (success)
+          result.success(null)
+        else
+          result.error("Unable to set MTU", null, trace())
       }
       else -> {
         result.notImplemented()
