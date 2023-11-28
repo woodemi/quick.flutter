@@ -313,6 +313,10 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
         sendMessage(messageConnector, mapOf(
           "mtuConfig" to mtu
         ))
+      } else {
+        sendMessage(messageConnector, mapOf(
+          "mtuConfig" to -1
+        ))
       }
     }
 
