@@ -11,11 +11,14 @@ export 'models.dart';
 
 typedef QuickLogger = Logger;
 
-typedef OnConnectionChanged = void Function(String deviceId, BlueConnectionState state);
+typedef OnConnectionChanged = void Function(
+    String deviceId, BlueConnectionState state);
 
-typedef OnServiceDiscovered = void Function(String deviceId, String serviceId, List<String> characteristicIds);
+typedef OnServiceDiscovered = void Function(
+    String deviceId, String serviceId, List<String> characteristicIds);
 
-typedef OnValueChanged = void Function(String deviceId, String characteristicId, Uint8List value);
+typedef OnValueChanged = void Function(
+    String deviceId, String characteristicId, Uint8List value);
 
 abstract class QuickBluePlatform extends PlatformInterface {
   QuickBluePlatform() : super(token: _token);
@@ -37,29 +40,36 @@ abstract class QuickBluePlatform extends PlatformInterface {
 
   Stream<int> get availabilityChangeStream;
 
-  Future<void> startScan();
+  Future<void> startScan(List<String>? serviceUUIDs);
 
   Future<void> stopScan();
 
   Stream<dynamic> get scanResultStream;
 
-  void connect(String deviceId);
+  Future<void> connect(String deviceId);
 
-  void disconnect(String deviceId);
+  Future<void> disconnect(String deviceId);
 
   OnConnectionChanged? onConnectionChanged;
 
-  void discoverServices(String deviceId);
+  Future<void> discoverServices(String deviceId);
 
   OnServiceDiscovered? onServiceDiscovered;
 
-  Future<void> setNotifiable(String deviceId, String service, String characteristic, BleInputProperty bleInputProperty);
+  Future<void> setNotifiable(String deviceId, String service,
+      String characteristic, BleInputProperty bleInputProperty);
 
   OnValueChanged? onValueChanged;
 
-  Future<void> readValue(String deviceId, String service, String characteristic);
+  Future<void> readValue(
+      String deviceId, String service, String characteristic);
 
-  Future<void> writeValue(String deviceId, String service, String characteristic, Uint8List value, BleOutputProperty bleOutputProperty);
+  Future<void> writeValue(
+      String deviceId,
+      String service,
+      String characteristic,
+      Uint8List value,
+      BleOutputProperty bleOutputProperty);
 
   Future<int> requestMtu(String deviceId, int expectedMtu);
 }
