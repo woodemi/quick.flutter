@@ -161,6 +161,12 @@ class MethodChannelQuickBlue extends QuickBluePlatform {
       'deviceId': deviceId,
       'expectedMtu': expectedMtu,
     }).then((_) => _log('requestMtu invokeMethod success'));
-    return await _mtuConfigController.stream.first;
+    int mtu = await _mtuConfigController.stream.first
+        .timeout(const Duration(milliseconds: 1500));
+    if (mtu == -1) {
+      throw Exception('Unable to set MTU size');
+    } else {
+      return mtu;
+    }
   }
 }

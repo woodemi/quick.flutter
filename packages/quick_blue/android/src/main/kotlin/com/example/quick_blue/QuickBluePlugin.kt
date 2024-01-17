@@ -189,8 +189,11 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
           val expectedMtu = call.argument<Int>("expectedMtu")!!
           val gatt = knownGatts.find { it.device.address == deviceId }
                   ?: return result.error("IllegalArgument", "Unknown deviceId: $deviceId", trace())
-          gatt.requestMtu(expectedMtu)
-          result.success(null)
+          val success = gatt.requestMtu(expectedMtu)
+          if (success)
+            result.success(null)
+          else
+            result.error("Unable to set MTU", null, trace())
         }
         else -> {
           result.notImplemented()
@@ -203,8 +206,9 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
   }
 
   private fun cleanConnection(gatt: BluetoothGatt) {
-    knownGatts.remove(gatt)
+    gatt.close()
     gatt.disconnect()
+    knownGatts.remove(gatt)
   }
 
   enum class AvailabilityState(val value: Int) {
@@ -319,6 +323,10 @@ class QuickBluePlugin: FlutterPlugin, MethodCallHandler, EventChannel.StreamHand
       if (status == BluetoothGatt.GATT_SUCCESS) {
         sendMessage(messageConnector, mapOf(
           "mtuConfig" to mtu
+        ))
+      } else {
+        sendMessage(messageConnector, mapOf(
+          "mtuConfig" to -1
         ))
       }
     }
